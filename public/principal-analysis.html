@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comprehensive Analysis - Principal</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+    <style>
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 20px;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .filters select,
+        .filters input,
+        .filters button {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .filters button {
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .danger-btn {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="mit-header">
+        <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+        <div class="header-text">
+            <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+            <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+            <p class="aff-text">
+                Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New
+                Delhi,
+                Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+                <strong>DTE CODE - 06901</strong>
+            </p>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <div class="logo">Library Overview</div>
+        <ul class="nav-links">
+            <li><a href="principal-dashboard.html">Dashboard</a></li>
+        </ul>
+
+        <div class="profile-container">
+            <a href="index.html" class="nav-button" id="loginBtn">Login</a>
+            <div class="profile" id="profileMenu" style="display: none;">
+                <img src="./images/profile-icon.jpg" class="profile-icon" id="profileIcon" />
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-details">
+                        <p class="profile-name">Principal</p>
+                        <p class="profile-email">email@example.com</p>
+                    </div>
+                    <a href="#" class="logout-btn" id="logoutBtn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="analysis-content" style="padding: 20px 40px;">
+        <h2 style="text-align: center;">📊 Full Entry Analysis (All Departments)</h2>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="departmentFilter">Department</label>
+                <select id="departmentFilter">
+                    <option value="">All</option>
+                    <option value="Computer Science">CSE</option>
+                    <option value="Mechanical">ME</option>
+                    <option value="Civil">CE</option>
+                    <option value="Electronics and Telecommunication">E&TC</option>
+                    <option value="Electronics and Computer">ECE</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="designationFilter">Designation</label>
+                <select id="designationFilter">
+                    <option value="">All</option>
+                    <option value="Student">Student</option>
+                    <option value="Faculty">Staff</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="startDate">Start Date</label>
+                <input type="date" id="startDate" />
+            </div>
+            <div class="filter-group">
+                <label for="endDate">End Date</label>
+                <input type="date" id="endDate" />
+            </div>
+            <div class="filter-actions">
+                <button id="exportBtn">Export to CSV</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="log-table" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Entry Date</th>
+                        <th>Entry Time</th>
+                        <th>Exit Time</th>
+                    </tr>
+                </thead>
+                <tbody id="analysisTable">
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Developed by Durgesh Borole | Raghvendra Gupta | Rahul Baravkar | Bhogesh Allapure</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Security check for Principal role
+            const token = sessionStorage.getItem('authToken');
+            const userRole = sessionStorage.getItem('userRole');
+            if (!token || userRole !== 'principal') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const departmentFilter = document.getElementById("departmentFilter");
+            const designationFilter = document.getElementById("designationFilter");
+            const startDate = document.getElementById("startDate");
+            const endDate = document.getElementById("endDate");
+            const exportBtn = document.getElementById("exportBtn");
+            const tableBody = document.getElementById("analysisTable");
+            let allLogsData = [];
+
+            async function fetchData() {
+                try {
+                    const res = await fetch("/all-logs");
+                    allLogsData = await res.json();
+                    renderTable(allLogsData);
+                } catch (err) {
+                    console.error("Failed to load data", err);
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">${err.message}</td></tr>`;
+                }
+            }
+
+            function applyFilters() {
+                const dept = departmentFilter.value;
+                const desg = designationFilter.value;
+                const start = startDate.value ? new Date(startDate.value) : null;
+                const end = endDate.value ? new Date(endDate.value) : null;
+
+                if (start) start.setHours(0, 0, 0, 0);
+                if (end) end.setHours(23, 59, 59, 999);
+
+                const filtered = allLogsData.filter(entry => {
+                    const entryDate = new Date(entry.entryTime);
+                    return (!dept || entry.department === dept) &&
+                        (!desg || entry.designation === desg) &&
+                        (!start || entryDate >= start) &&
+                        (!end || entryDate <= end);
+                });
+                renderTable(filtered);
+            }
+
+            function renderTable(logs) {
+                tableBody.innerHTML = "";
+                if (logs.length === 0) {
+                    tableBody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No matching entries found.</td></tr>";
+                    return;
+                }
+                logs.forEach(entry => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${entry.name || 'N/A'}</td>
+                        <td>${entry.department || 'N/A'}</td>
+                        <td>${entry.designation || 'N/A'}</td>
+                        <td>${new Date(entry.entryTime).toLocaleDateString()}</td>
+                        <td>${new Date(entry.entryTime).toLocaleTimeString()}</td>
+                        <td>${entry.exitTime ? new Date(entry.exitTime).toLocaleTimeString() : '-'}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function exportToCSV() {
+                let csvContent = "Name,Department,Designation,Entry Date,Entry Time,Exit Time\n";
+                const rows = tableBody.querySelectorAll("tr");
+                rows.forEach(row => {
+                    const cols = row.querySelectorAll("td");
+                    const rowData = Array.from(cols).map(td => `"${td.innerText.replace(/"/g, '""')}"`).join(",");
+                    csvContent += rowData + "\n";
+                });
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "full_library_logs.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                sessionStorage.clear();
+                window.location.href = 'index.html';
+            });
+
+            departmentFilter.addEventListener("change", applyFilters);
+            designationFilter.addEventListener("change", applyFilters);
+            startDate.addEventListener("change", applyFilters);
+            endDate.addEventListener("change", applyFilters);
+            exportBtn.addEventListener("click", exportToCSV);
+
+            fetchData();
+        });
+    </script>
+    <!-- <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginBtn = document.getElementById('loginBtn');
+            const profileMenu = document.getElementById('profileMenu');
+            const profileIcon = document.getElementById('profileIcon');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            const principalEmail = sessionStorage.getItem('principalEmail');
+            const authToken = sessionStorage.getItem('authToken');
+
+            if (authToken && principalEmail) {
+                // User is logged in: hide login button, show profile menu
+                loginBtn.style.display = 'none';
+                profileMenu.style.display = 'block'; // Use 'block' to show the div
+                document.querySelector('.profile-email').textContent = principalEmail;
+            } else {
+                // User is not logged in: show login button, hide profile menu
+                loginBtn.style.display = 'block';
+                profileMenu.style.display = 'none';
+            }
+
+            profileIcon.addEventListener('click', (event) => {
+                profileDropdown.classList.toggle('show');
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', () => {
+                if (profileDropdown.classList.contains('show')) {
+                    profileDropdown.classList.remove('show');
+                }
+            });
+
+            logoutBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                sessionStorage.removeItem('authToken');
+                sessionStorage.removeItem('principalEmail');
+                alert('You have been logged out.');
+                window.location.href = 'index.html';
+            });
+        });
+    </script> -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // This gatekeeper was already correct
+            const token = sessionStorage.getItem('authToken');
+            const userRole = sessionStorage.getItem('userRole');
+            if (!token || userRole !== 'principal') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const headers = { 'Authorization': `Bearer ${token}` };
+            let departmentChart = null;
+
+            async function fetchDashboardData() {
+                try {
+                    const statsRes = await fetch('/api/principal/stats', { headers });
+                    const statsData = await statsRes.json();
+                    if (statsRes.ok) {
+                        document.getElementById('totalVisits').textContent = statsData.totalVisitsToday;
+                        document.getElementById('peakHour').textContent = statsData.peakHour || 'N/A';
+                        updateChart(statsData.departmentCounts);
+                    }
+
+                    const logRes = await fetch('/live-log');
+                    const logData = await logRes.json();
+                    const logTableBody = document.getElementById('liveLogTable');
+                    logTableBody.innerHTML = '';
+                    if (logData.length > 0) {
+                        logData.slice(0, 10).forEach(log => {
+                            const row = `
+                            <tr>
+                                <td>${log.name}</td>
+                                <td>${log.department}</td>
+                                <td>${log.designation}</td>
+                                <td>${new Date(log.entryTime).toLocaleTimeString()}</td>
+                                <td>${log.exitTime ? new Date(log.exitTime).toLocaleTimeString() : 'Inside'}</td>
+                            </tr>`;
+                            logTableBody.innerHTML += row;
+                        });
+                    } else {
+                        logTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No entries yet today.</td></tr>';
+                    }
+                } catch (error) {
+                    console.error('Failed to load dashboard data:', error);
+                }
+            }
+
+            function updateChart(departmentData) {
+                const ctx = document.getElementById('departmentChart').getContext('2d');
+                const labels = departmentData.map(d => d._id);
+                const data = departmentData.map(d => d.count);
+                if (departmentChart) {
+                    departmentChart.destroy();
+                }
+                departmentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Number of Visits',
+                            data: data,
+                            backgroundColor: 'rgba(229, 9, 20, 0.6)',
+                            borderColor: 'rgba(229, 9, 20, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                        responsive: true,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            fetchDashboardData();
+            const socket = io();
+            socket.on('logUpdate', () => {
+                console.log('🔄 Received log update signal. Refetching dashboard data...');
+                fetchDashboardData();
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Gatekeeper Script ---
+            const authToken = sessionStorage.getItem('authToken');
+            const principalEmail = sessionStorage.getItem('principalEmail');
+            if (!authToken || !principalEmail) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // --- Original Page Logic ---
+            const loginBtn = document.getElementById('loginBtn');
+            const profileMenu = document.getElementById('profileMenu');
+            const profileIcon = document.getElementById('profileIcon');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            loginBtn.style.display = 'none';
+            profileMenu.style.display = 'block';
+            document.querySelector('.profile-email').textContent = principalEmail;
+
+            profileIcon.addEventListener('click', (event) => {
+                profileDropdown.classList.toggle('show');
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', () => {
+                if (profileDropdown.classList.contains('show')) {
+                    profileDropdown.classList.remove('show');
+                }
+            });
+
+            logoutBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                sessionStorage.removeItem('authToken');
+                sessionStorage.removeItem('principalEmail');
+                sessionStorage.removeItem('userRole'); // Also remove role
+                alert('You have been logged out.');
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MITCORER</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+</head>
+
+<body>
+    <header class="mit-header">
+        <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+        <div class="header-text">
+            <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+            <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+            <p class="aff-text">
+                Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New
+                Delhi,
+                Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+                <strong>DTE CODE - 06901</strong>
+            </p>
+        </div>
+    </header>
+    <main class="auth-wrapper">
+        <div class="auth-container">
+            <h2 id="form-title">Login</h2>
+            <form id="loginForm">
+                <div class="input-group" id="email-group">
+                    <input type="email" id="email" placeholder="Your Email Address" required />
+                </div>
+                <div class="input-group" id="password-group">
+                    <input type="password" id="password" placeholder="Password" required />
+                </div>
+                <!-- <div class="input-group" id="otp-group" style="display: none;">
+                    <input type="text" id="otp" placeholder="Enter 6-digit OTP" />
+                </div> -->
+                <button type="submit" id="submit-btn" class="submit-btn">Login</button>
+            </form>
+            <p id="loginMessage" class="message"></p>
+            <p class="auth-link">Forget Password? <a href="password-reset.html">Click here</a></p>
+        </div>
+    </main>
+    <footer class="footer">
+        <p>Developed by Durgesh Borole | Raghvendra Gupta | Rahul Baravkar | Bhogesh Allapure</p>
+    </footer>
+
+    <!-- <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordGroup = document.getElementById('password-group');
+            // The 'otp-group' is commented out in the HTML, so this line might not be needed
+            // const otpGroup = document.getElementById('otp-group'); 
+            const submitBtn = document.getElementById('submit-btn');
+            const messageEl = document.getElementById('loginMessage');
+            const titleEl = document.getElementById('form-title');
+
+            let isAwaitingOtp = false;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                messageEl.textContent = '';
+                messageEl.className = 'message';
+
+                if (!isAwaitingOtp) {
+                    // --- Step 1: Handle unified login ---
+                    const email = emailInput.value;
+                    const password = document.getElementById('password').value;
+
+                    try {
+                        const res = await fetch("/api/login/unified", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email, password }),
+                        });
+                        const result = await res.json();
+
+                        if (!res.ok) {
+                            throw new Error(result.message || "Login failed.");
+                        }
+
+                        // This section for OTP verification appears to be disabled in your HTML,
+                        // but the logic is here if you re-enable it.
+                        if (result.verificationRequired) {
+                            isAwaitingOtp = true;
+                            messageEl.textContent = result.message;
+                            messageEl.className = 'message success';
+                            titleEl.textContent = 'HOD Verification';
+                            passwordGroup.style.display = 'none';
+
+                            // Ensure otpGroup exists before trying to style it
+                            const otpGroup = document.getElementById('otp-group');
+                            if (otpGroup) otpGroup.style.display = 'block';
+
+                            emailInput.readOnly = true;
+                            submitBtn.textContent = 'Verify and Login';
+                            return;
+                        }
+
+                        // --- Handle Successful Login ---
+                        sessionStorage.setItem('authToken', result.token);
+
+                        // Note: 'userRole' is not strictly required by the dashboards, 
+                        // but can be useful for debugging.
+                        sessionStorage.setItem('userRole', result.role);
+
+                        if (result.role === 'admin') {
+                            sessionStorage.setItem('adminEmail', result.email);
+                            window.location.href = 'dashboard.html';
+                        } else if (result.role === 'principal') {
+                            sessionStorage.setItem('principalEmail', result.email);
+                            window.location.href = 'principal-dashboard.html';
+                        } else if (result.role === 'hod') {
+                            // ✅ **THIS IS THE FIX**
+                            // You were missing the line to save the HOD's email.
+                            sessionStorage.setItem('hodDepartment', result.department);
+                            sessionStorage.setItem('hodEmail', result.email); // Add this line
+                            window.location.href = 'hod-dashboard.html';
+                        } else {
+                            throw new Error("Unknown user role received from server.");
+                        }
+
+                    } catch (error) {
+                        messageEl.textContent = error.message;
+                        messageEl.className = 'message error';
+                    }
+                } else {
+                    // --- Step 2: Handle HOD OTP verification (if re-enabled) ---
+                    const email = emailInput.value;
+                    const otp = document.getElementById('otp').value;
+                    try {
+                        const res = await fetch("/api/hod/verify-login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email, otp }),
+                        });
+                        const result = await res.json();
+                        if (!res.ok) throw new Error(result.message || "Verification failed.");
+
+                        sessionStorage.setItem('authToken', result.token);
+                        sessionStorage.setItem('userRole', 'hod');
+                        sessionStorage.setItem('hodDepartment', result.department);
+                        sessionStorage.setItem('hodEmail', email); // Also save email on OTP verification
+                        window.location.href = "hod-dashboard.html";
+
+                    } catch (error) {
+                        messageEl.textContent = error.message;
+                        messageEl.className = 'message error';
+                    }
+                }
+            });
+        });
+    </script> -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordGroup = document.getElementById('password-group');
+            const submitBtn = document.getElementById('submit-btn');
+            const messageEl = document.getElementById('loginMessage');
+            const titleEl = document.getElementById('form-title');
+
+            let isAwaitingOtp = false;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                messageEl.textContent = '';
+                messageEl.className = 'message';
+
+                if (!isAwaitingOtp) {
+                    // --- Step 1: Handle unified login ---
+                    const email = emailInput.value;
+                    const password = document.getElementById('password').value;
+
+                    try {
+                        const res = await fetch("/api/login/unified", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email, password }),
+                        });
+                        const result = await res.json();
+
+                        if (!res.ok) {
+                            throw new Error(result.message || "Login failed.");
+                        }
+
+                        // This section for OTP verification appears to be disabled in your HTML,
+                        // but the logic is here if you re-enable it.
+                        if (result.verificationRequired) {
+                            isAwaitingOtp = true;
+                            messageEl.textContent = result.message;
+                            messageEl.className = 'message success';
+                            titleEl.textContent = 'HOD Verification';
+                            passwordGroup.style.display = 'none';
+
+                            const otpGroup = document.getElementById('otp-group');
+                            if (otpGroup) otpGroup.style.display = 'block';
+
+                            emailInput.readOnly = true;
+                            submitBtn.textContent = 'Verify and Login';
+                            return;
+                        }
+
+                        // --- Handle Successful Login ---
+                        sessionStorage.setItem('authToken', result.token);
+                        sessionStorage.setItem('userRole', result.role); // Optional, for debugging
+
+                        if (result.role === 'admin') {
+                            sessionStorage.setItem('adminEmail', result.email);
+                            window.location.href = 'dashboard.html';
+                        } else if (result.role === 'principal') {
+                            sessionStorage.setItem('principalEmail', result.email);
+                            window.location.href = 'principal-dashboard.html';
+                        } else if (result.role === 'hod') {
+                            sessionStorage.setItem('hodDepartment', result.department);
+                            sessionStorage.setItem('hodEmail', result.email);
+                            window.location.href = 'hod-dashboard.html';
+                        } else if (result.role === 'assistant') { // ✅ **THIS IS THE FIX**
+                            sessionStorage.setItem('userEmail', result.email); // Use a generic key
+                            window.location.href = 'assistant.html';
+                        } else {
+                            // This is where your original error came from
+                            throw new Error("Unknown user role received from server.");
+                        }
+
+                    } catch (error) {
+                        messageEl.textContent = error.message;
+                        messageEl.className = 'message error';
+                    }
+                } else {
+                    // --- Step 2: Handle HOD OTP verification (if re-enabled) ---
+                    const email = emailInput.value;
+                    const otp = document.getElementById('otp').value;
+                    try {
+                        const res = await fetch("/api/hod/verify-login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email, otp }),
+                        });
+                        const result = await res.json();
+                        if (!res.ok) throw new Error(result.message || "Verification failed.");
+
+                        sessionStorage.setItem('authToken', result.token);
+                        sessionStorage.setItem('userRole', 'hod');
+                        sessionStorage.setItem('hodDepartment', result.department);
+                        sessionStorage.setItem('hodEmail', email);
+                        window.location.href = "hod-dashboard.html";
+
+                    } catch (error) {
+                        messageEl.textContent = error.message;
+                        messageEl.className = 'message error';
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

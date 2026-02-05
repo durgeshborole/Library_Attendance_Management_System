@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOD Registration - MITCORER</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+</head>
+
+<body>
+
+    <header class="mit-header">
+        <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+        <div class="header-text">
+            <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+            <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+            <p class="aff-text">
+                Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New
+                Delhi,
+                Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+                <strong>DTE CODE - 06901</strong>
+            </p>
+        </div>
+    </header>
+
+    <main class="auth-wrapper">
+        <div class="auth-container">
+            <h2>Register New HOD</h2>
+            <form id="hodForm" novalidate>
+                <div class="input-group">
+                    <span class="icon">📧</span>
+                    <input type="email" id="email" placeholder="HOD Email Address" required />
+                </div>
+                <div class="input-group">
+                    <span class="icon">🏢</span>
+                    <input type="text" id="department" placeholder="Department" required />
+                </div>
+                <!-- <div class="input-group">
+                    <span class="icon">📱</span>
+                    <input type="tel" id="mobile" placeholder="Mobile Number" required />
+                </div>
+                <div class="input-group">
+                    <span class="icon">🎂</span>
+                    <input type="text" onfocus="(this.type='date')" onblur="(this.type='text')" id="dob"
+                        placeholder="Date of Birth" required />
+                </div> -->
+                <div class="input-group">
+                    <span class="icon">🔒</span>
+                    <input type="password" id="password" placeholder="Create a password" required />
+                </div>
+                <button type="submit" class="submit-btn">Register HOD</button>
+            </form>
+            <p id="msg" class="message"></p>
+            <!-- <p class="auth-link">Already an HOD? <a href="index.html">Login here</a></p> -->
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Developed by Durgesh Borole | Raghvendra Gupta | Rahul Baravkar | Bhogesh Allapure</p>
+    </footer>
+
+    <script>
+        document.getElementById("hodForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const department = document.getElementById("department").value;
+            // ✅ GET NEW VALUES
+            // const mobile = document.getElementById("mobile").value;
+            // const dob = document.getElementById("dob").value;
+            const messageEl = document.getElementById("msg");
+
+            try {
+                const res = await fetch("/api/register-hod", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    // ✅ SEND NEW VALUES IN BODY
+                    body: JSON.stringify({ email, password, department }),
+                });
+                const result = await res.json();
+                messageEl.innerText = result.message;
+                if (res.ok && result.success) {
+                    messageEl.style.color = 'var(--success-color)';
+                    document.getElementById("hodForm").reset();
+                } else {
+                    messageEl.style.color = 'var(--error-color)';
+                }
+            } catch (error) {
+                console.error("HOD Registration Frontend Error:", error);
+                messageEl.innerText = "Cannot connect to the server.";
+                messageEl.style.color = 'var(--error-color)';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal Registration - Admin</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+</head>
+<body>
+    <header class="mit-header">
+    <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+    <div class="header-text">
+      <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+      <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+      <p class="aff-text">
+        Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New Delhi,
+        Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+        <strong>DTE CODE - 06901</strong>
+      </p>
+    </div>
+  </header>
+
+    <main class="auth-wrapper">
+        <div class="auth-container">
+            <h2>Register New Principal</h2>
+            <form id="principalForm" novalidate>
+                <div class="input-group">
+                    <span class="icon">📧</span>
+                    <input type="email" id="email" placeholder="Principal's Email Address" required />
+                </div>
+                <div class="input-group">
+                    <span class="icon">🔒</span>
+                    <input type="password" id="password" placeholder="Create a temporary password" required />
+                </div>
+                <button type="submit" class="submit-btn">Register Principal</button>
+            </form>
+            <p id="msg" class="message"></p>
+            <p class="auth-link"><a href="admin.html">Back to Admin Panel</a></p>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Developed by Durgesh Borole | Raghvendra Gupta | Rahul Baravkar | Bhogesh Allapure</p>
+    </footer>
+
+    <script>
+        document.getElementById("principalForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const messageEl = document.getElementById("msg");
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                messageEl.textContent = 'Authentication error. Please log in as an admin.';
+                messageEl.className = 'message error';
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/register-principal", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+                const result = await res.json();
+                messageEl.textContent = result.message;
+
+                if (res.ok) {
+                    messageEl.className = 'message success';
+                    document.getElementById("principalForm").reset();
+                } else {
+                    messageEl.className = 'message error';
+                }
+            } catch(error) {
+                messageEl.textContent = "Cannot connect to the server.";
+                messageEl.className = 'message error';
+            }
+        });
+    </script>
+</body>
+</html>

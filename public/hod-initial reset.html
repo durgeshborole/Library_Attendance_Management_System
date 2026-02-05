@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Your Password - MITCORER</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="mit-header">
+        <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+        <div class="header-text">
+            <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+            <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+            <p class="aff-text">
+                Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New
+                Delhi,
+                Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+                <strong>DTE CODE - 06901</strong>
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="auth-wrapper">
+        <div class="auth-container">
+            <h2>Set Your New Password</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">For security, you must set a new password
+                for your account.</p>
+            <form id="resetForm" novalidate>
+                <div class="input-group">
+                    <span class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-key-fill" viewBox="0 0 16 16">
+                            <path
+                                d="M3.5 11.5a3.5 3.5 0 1 1 3.163-5H14L15.5 8 14 9.5l-1-1-1 1-1-1-1 1-1-1-1 1H6.663a3.5 3.5 0 0 1-3.163 2zM2.5 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
+                        </svg>
+                    </span>
+                    <input type="password" id="newPassword" placeholder="New Password" required />
+                </div>
+                <div class="input-group">
+                    <span class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-key-fill" viewBox="0 0 16 16">
+                            <path
+                                d="M3.5 11.5a3.5 3.5 0 1 1 3.163-5H14L15.5 8 14 9.5l-1-1-1 1-1-1-1 1-1-1-1 1H6.663a3.5 3.5 0 0 1-3.163 2zM2.5 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
+                        </svg>
+                    </span>
+                    <input type="password" id="confirmPassword" placeholder="Confirm New Password" required />
+                </div>
+                <button type="submit" class="submit-btn">Set Password</button>
+            </form>
+            <p id="resetMessage" class="message"></p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Developed by Durgesh Borole | Raghvendra Gupta | Rahul Baravkar | Bhogesh Allapure</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+
+            if (!email) {
+                document.getElementById("resetMessage").innerText = "Error: No email specified. Please try logging in again.";
+                document.querySelector(".submit-btn").disabled = true;
+            }
+
+            document.getElementById("resetForm").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                const newPassword = document.getElementById("newPassword").value;
+                const confirmPassword = document.getElementById("confirmPassword").value;
+                const messageEl = document.getElementById("resetMessage");
+
+                if (newPassword !== confirmPassword) {
+                    messageEl.innerText = "New passwords do not match.";
+                    return;
+                }
+
+                try {
+                    const res = await fetch("/api/hod-initial-reset", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, newPassword }),
+                    });
+
+                    const result = await res.json();
+                    messageEl.innerText = result.message;
+
+                    if (res.ok && result.success) {
+                        messageEl.style.color = 'var(--success-color)';
+                        setTimeout(() => {
+                            window.location.href = "index.html";
+                        }, 2500);
+                    } else {
+                        messageEl.style.color = 'var(--error-color)';
+                    }
+                } catch (error) {
+                    messageEl.innerText = "Cannot connect to the server.";
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

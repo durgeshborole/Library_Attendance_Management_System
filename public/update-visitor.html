@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Visitor</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+</head>
+
+<body>
+
+    <header class="mit-header">
+        <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+        <div class="header-text">
+            <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+            <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+            <p class="aff-text">
+                Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New
+                Delhi,
+                Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+                <strong>DTE CODE - 06901</strong>
+            </p>
+        </div>
+    </header>
+
+    <div class="auth-wrapper">
+        <div class="auth-container">
+            <h2>Update Visitor Details</h2>
+            <form id="updateForm">
+                <div class="form-group">
+                    <label>Barcode</label>
+                    <input type="text" id="barcode" name="barcode" readonly />
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="name" name="name" required />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" name="email" />
+                </div>
+                <div class="form-group">
+                    <label>Mobile</label>
+                    <input type="text" id="mobile" name="mobile" />
+                </div>
+
+                <div class="form-group">
+                    <label>New Photo (Optional)</label>
+                    <input type="file" id="photo" name="photo" accept="image/*" />
+                    <img id="photoPreview" src="/images/default.jpg" alt="Current Photo"
+                        style="max-width: 100px; margin-top: 10px;" />
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">Update Visitor</button>
+                    <a href="registered.html" class="btn-cancel"
+                        style="text-align: center; padding: 10px; background-color: #6c757d;">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <footer class="footer">
+        <p>Developed by Durgesh Borole | Raghvendra Gupta | Rahul Baravkar | Bhogesh Allapure</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const barcode = new URLSearchParams(window.location.search).get("barcode");
+            const form = document.getElementById("updateForm");
+
+            // ✅ Get the admin authentication token
+            const token = sessionStorage.getItem('authToken');
+
+            // Redirect if barcode is missing or user is not logged in
+            if (!barcode || !token) {
+                alert("Error: Missing barcode or not logged in. Redirecting...");
+                window.location.href = "registered.html";
+                return;
+            }
+
+            const authHeaders = { 'Authorization': `Bearer ${token}` };
+
+            // 🔹 Preload existing visitor details
+            async function loadVisitor() {
+                try {
+                    // ✅ Using relative URL and auth headers
+                    const res = await fetch(`/api/students/${barcode}`, { headers: authHeaders });
+                    const data = await res.json();
+
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.message || "Visitor not found.");
+                    }
+
+                    const visitor = data.student;
+                    document.getElementById("barcode").value = visitor.barcode;
+                    document.getElementById("name").value = visitor.name;
+                    document.getElementById("email").value = visitor.email || "";
+                    document.getElementById("mobile").value = visitor.mobile || "";
+                    document.getElementById("photoPreview").src = visitor.photoUrl || "/images/default.jpg";
+
+                } catch (err) {
+                    console.error("Error loading visitor:", err);
+                    alert("❌ Failed to load visitor: " + err.message);
+                    window.location.href = "registered.html";
+                }
+            }
+
+            // 🔹 Update form submission
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+
+                try {
+                    // ✅ Using relative URL and auth headers
+                    const res = await fetch(`/api/students/${barcode}`, {
+                        method: "PUT",
+                        headers: authHeaders, // No Content-Type needed for FormData
+                        body: formData,
+                    });
+
+                    const result = await res.json();
+
+                    if (res.ok && result.success) {
+                        alert("✅ Visitor updated successfully!");
+                        window.location.href = "registered.html";
+                    } else {
+                        alert("❌ Update failed: " + (result.message || "Unknown error"));
+                    }
+                } catch (err) {
+                    console.error("Error updating visitor:", err);
+                    alert("❌ Error occurred while updating.");
+                }
+            });
+
+            loadVisitor();
+        });
+    </script>
+</body>
+
+</html>

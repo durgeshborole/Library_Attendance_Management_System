@@ -1,0 +1,170 @@
+/* auth-style.css */
+/* A modern, clean stylesheet for login and registration pages */
+
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- Root Variables for easy theme changes --- */
+:root {
+    --primary-color: #ff0808; /* A nice blue */
+    --primary-hover-color: #0b5ed7;
+    --background-color: #f0f2f5;
+    --form-background-color: #ffffff;
+    --text-color: #333;
+    --label-color: #666;
+    --border-color: #dee2e6;
+    --error-color: #dc3545;
+    --success-color: #198754;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* --- General Body Styles --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-color);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    color: var(--text-color);
+}
+
+/* --- MITCORER Header --- */
+.mit-header {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    padding: 10px 30px;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mit-logo {
+    height: 60px;
+    margin-right: 20px;
+}
+
+.header-text h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #ff0000; /* Dark blue for header text */
+}
+
+.header-text p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+
+/* --- Main Authentication Container --- */
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.auth-container {
+    background-color: var(--form-background-color);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px var(--shadow-color);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auth-container h2 {
+    margin-bottom: 25px;
+    font-weight: 600;
+    font-size: 1.8rem;
+    color: var(--text-color);
+}
+
+/* --- Form Input Styling --- */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group .icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+    pointer-events: none;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px 12px 45px; /* Left padding for icon */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+
+/* --- Button Styling --- */
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: var(--primary-hover-color);
+    transform: translateY(-2px);
+}
+
+/* --- Links and Messages --- */
+.auth-link {
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+
+.auth-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+.message {
+    color: var(--error-color);
+    margin-top: 15px;
+    font-size: 0.9rem;
+    min-height: 20px;
+}

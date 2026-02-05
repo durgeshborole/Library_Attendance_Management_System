@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin: Data Fix Utility</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+</head>
+<body>
+    <header class="mit-header">
+        <div class="header-text"><h1>Admin: Data Fix Utility</h1></div>
+    </header>
+    <nav class="navbar">
+        <div class="logo">Database Tools</div>
+        <ul class="nav-links"><li><a href="admin.html">Back to Admin Panel</a></li></ul>
+    </nav>
+    <main class="auth-wrapper">
+        <div class="auth-container">
+            <h2>Repair Missing Academic Statuses</h2>
+            <p>This is a one-time tool to create academic status records for existing students who were added before the promotion system was in place.</p>
+            <button id="fixBtn" class="submit-btn">Run Fix</button>
+            <div id="statusMessage" class="message" style="margin-top: 20px;"></div>
+        </div>
+    </main>
+    <script>
+        document.getElementById('fixBtn').addEventListener('click', async () => {
+            const token = localStorage.getItem('authToken');
+            const statusEl = document.getElementById('statusMessage');
+
+            if (!token) {
+                statusEl.textContent = "Error: You are not logged in as an admin.";
+                statusEl.className = 'message error';
+                return;
+            }
+
+            statusEl.textContent = "Running fix... Please wait.";
+            statusEl.className = 'message info';
+
+            try {
+                const response = await fetch('/api/admin/fix-academic-statuses', {
+                    method: 'GET', // Method is GET as defined in server.js
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                // Since the server might respond with plain text, handle both cases
+                if (response.headers.get("content-type")?.includes("application/json")) {
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+                    statusEl.textContent = result.message;
+                } else {
+                    const textResult = await response.text();
+                    if (!response.ok) throw new Error(textResult);
+                    statusEl.textContent = textResult;
+                }
+                
+                statusEl.className = 'message success';
+            } catch (error) {
+                statusEl.textContent = "Error: " + error.message;
+                statusEl.className = 'message error';
+            }
+        });
+    </script>
+</body>
+</html>

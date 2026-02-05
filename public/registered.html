@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registered Visitors</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <header class="mit-header">
+    <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+    <div class="header-text">
+      <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+      <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+      <p class="aff-text">
+        Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New
+        Delhi,
+        Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+        <strong>DTE CODE - 06901</strong>
+      </p>
+    </div>
+  </header>
+  <nav class="navbar">
+    <div class="logo">Registered Students</div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="active">Home</a></li>
+      <li><a href="log.html">Log Entries</a></li>
+      <li><a href="analysis.html">Analysis</a></li>
+      <li><a href="admin.html">Admin</a></li>
+    </ul>
+
+    <div class="profile-container">
+      <a href="dashboard.html" class="nav-button" id="loginBtn">Login</a>
+      <div class="profile" id="profileMenu" style="display: none;">
+        <img src="./images/profile-icon.jpg" alt="Profile" class="profile-icon" id="profileIcon" />
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-details">
+            <p class="profile-name">Administrator</p>
+            <p class="profile-email">email@example.com</p>
+          </div>
+          <a href="#" class="logout-btn" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="visitor-list-container">
+    <h2>📘 Registered Visitors</h2>
+
+    <div class="controls">
+      <input id="searchInput" type="text" placeholder="🔍 Search by name or barcode..." class="search-input" />
+      <div class="sort-container">
+        <label for="sortOrder">Sort by Name:</label>
+        <select id="sortOrder" class="sort-select">
+          <option value="name_asc"> From A to Z</option>
+          <option value="name_desc">From Z to A</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="visitorList" class="visitor-list">
+      <p>Loading visitors...</p>
+    </div>
+
+    <div class="pagination">
+      <button id="prevPage">⬅ Prev</button>
+      <span id="pageInfo">Page 1</span>
+      <button id="nextPage">Next ➡</button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>Developed by Team MITCORER</p>
+  </footer>
+
+  <!-- <script>
+    let currentPage = 1;
+    const limit = 20;
+    let totalPages = 1;
+    let currentSearch = "";
+    let currentSort = "name_asc"; // Default sort order
+
+    async function loadVisitors(page = 1, search = "", sort = "name_asc") {
+      const container = document.getElementById("visitorList");
+      const pageInfo = document.getElementById("pageInfo");
+      const sortSelect = document.getElementById("sortOrder");
+
+      container.innerHTML = "<p>Loading...</p>";
+
+      try {
+        // M: This line creates a unique value to prevent browser caching
+        const cacheBuster = new Date().getTime();
+        
+        // M: The `sort` parameter name was changed to `sortByName` to match backend expectations
+        const sortDirection = sort === "name_asc" ? 1 : -1;
+        
+        // M: Added the cacheBuster (`_=${cacheBuster}`) to the end of the URL
+        const res = await fetch(`/students?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&sortByName=${sortDirection}&_=${cacheBuster}`);
+        const data = await res.json();
+
+        const visitors = data.students || [];
+        totalPages = data.totalPages || 1;
+        currentPage = data.currentPage || 1;
+
+        if (visitors.length === 0) {
+          container.innerHTML = "<p>No matching visitors found.</p>";
+          pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+          return;
+        }
+
+        container.innerHTML = "";
+        visitors.forEach(visitor => {
+          const div = document.createElement("div");
+          div.className = "visitor-card-full";
+          div.innerHTML = `
+            <img src="${visitor.photoBase64 || './images/default.jpg'}" alt="Photo of ${visitor.name}" class="visitor-photo">
+            <div class="visitor-details">
+              <h3>${visitor.name}</h3>
+              <p><strong>Barcode:</strong> ${visitor.barcode}</p>
+              <p><strong>Email:</strong> ${visitor.email}</p>
+              <p><strong>Mobile:</strong> ${visitor.mobile}</p>
+              <p><strong>Department:</strong> ${visitor.department}</p>
+              <p><strong>Year:</strong> ${visitor.year}</p>
+            </div>
+            <div class="visitor-actions">
+              <button class="action-btn">⋮</button>
+              <div class="action-dropdown">
+                <a href="#" onclick="updateVisitor('${visitor.barcode}')">Update</a>
+                <a href="#" onclick="deleteVisitor('${visitor.barcode}', '${visitor.name}')">Delete</a>
+              </div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        
+        document.getElementById("prevPage").disabled = currentPage === 1;
+        document.getElementById("nextPage").disabled = currentPage === totalPages;
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = "<p>❌ Failed to load visitors.</p>";
+      }
+    }
+
+    // --- SCRIPT FOR CLICKABLE DROPDOWN ---
+    document.getElementById('visitorList').addEventListener('click', function (event) {
+      const actionButton = event.target.closest('.action-btn');
+      if (actionButton) {
+        const dropdown = actionButton.nextElementSibling;
+        document.querySelectorAll('.action-dropdown.show').forEach(openDropdown => {
+          if (openDropdown !== dropdown) {
+            openDropdown.classList.remove('show');
+          }
+        });
+        dropdown.classList.toggle('show');
+      }
+    });
+    window.addEventListener('click', function (event) {
+      if (!event.target.closest('.visitor-actions')) {
+        document.querySelectorAll('.action-dropdown.show').forEach(openDropdown => {
+          openDropdown.classList.remove('show');
+        });
+      }
+    });
+
+    // --- PAGINATION AND SEARCH ---
+    document.getElementById("prevPage").onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        loadVisitors(currentPage, currentSearch, currentSort);
+      }
+    };
+    document.getElementById("nextPage").onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadVisitors(currentPage, currentSearch, currentSort);
+      }
+    };
+    document.getElementById("searchInput").addEventListener("input", () => {
+      currentSearch = document.getElementById("searchInput").value;
+      currentPage = 1;
+      loadVisitors(currentPage, currentSearch, currentSort);
+    });
+
+    // ✅ UPDATED: Sort dropdown event listener
+    document.getElementById("sortOrder").addEventListener("change", (event) => {
+        currentSort = event.target.value;
+        currentPage = 1; 
+        loadVisitors(currentPage, currentSearch, currentSort);
+    });
+
+    // Initial load
+    window.onload = () => loadVisitors();
+
+    async function deleteVisitor(barcode, name) {
+      const token = sessionStorage.getItem('authToken');
+      if (!token) {
+        alert('Authentication error. Please log in as an admin.');
+        return;
+      }
+      if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+
+      try {
+        const res = await fetch(`/api/students/${barcode}`, {
+          method: "DELETE",
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          alert("✅ Visitor deleted successfully.");
+          loadVisitors(currentPage, currentSearch, currentSort);
+        } else {
+          alert("❌ Deletion failed: " + result.message);
+        }
+      } catch (err) {
+        console.error("❌ Error deleting visitor:", err);
+        alert("❌ An error occurred while deleting.");
+      }
+    }
+
+    function updateVisitor(barcode) {
+      window.location.href = `update-visitor.html?barcode=${encodeURIComponent(barcode)}`;
+    }
+    
+    // --- Login/Logout Logic ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const loginBtn = document.getElementById('loginBtn');
+        const profileMenu = document.getElementById('profileMenu');
+        const profileIcon = document.getElementById('profileIcon');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const adminEmail = sessionStorage.getItem('adminEmail');
+        const authToken = sessionStorage.getItem('authToken');
+
+        if (authToken && adminEmail) {
+            loginBtn.style.display = 'none';
+            profileMenu.style.display = 'block';
+            document.querySelector('.profile-email').textContent = adminEmail;
+        } else {
+            loginBtn.style.display = 'block';
+            profileMenu.style.display = 'none';
+        }
+
+        profileIcon.addEventListener('click', (event) => {
+            profileDropdown.classList.toggle('show');
+            event.stopPropagation();
+        });
+
+        window.addEventListener('click', () => {
+            if (profileDropdown.classList.contains('show')) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        logoutBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            sessionStorage.removeItem('authToken');
+            sessionStorage.removeItem('adminEmail');
+            alert('You have been logged out.');
+            window.location.href = 'index.html';
+        });
+    });
+  </script> -->
+
+  <script>
+    let currentPage = 1;
+    const limit = 20;
+    let totalPages = 1;
+    let currentSearch = "";
+    let currentSort = "name_asc";
+
+    // ✅ NEW: Debounce function to prevent API calls on every keystroke
+    function debounce(func, delay) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    async function loadVisitors(page = 1, search = "", sort = "name_asc") {
+      const container = document.getElementById("visitorList");
+      const pageInfo = document.getElementById("pageInfo");
+      container.innerHTML = "<p>Loading...</p>";
+
+      try {
+        const cacheBuster = new Date().getTime();
+        const sortDirection = sort === "name_asc" ? 1 : -1;
+
+        const res = await fetch(`/students?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&sortByName=${sortDirection}&_=${cacheBuster}`);
+        const data = await res.json();
+
+        const visitors = data.students || [];
+        totalPages = data.totalPages || 1;
+        currentPage = data.currentPage || 1;
+
+        if (visitors.length === 0) {
+          container.innerHTML = "<p>No matching visitors found.</p>";
+        } else {
+          container.innerHTML = "";
+          visitors.forEach(visitor => {
+            const div = document.createElement("div");
+            div.className = "visitor-card-full";
+            div.innerHTML = `
+                <img src="${visitor.photoBase64 || './images/default.jpg'}" alt="Photo of ${visitor.name}" class="visitor-photo">
+                <div class="visitor-details">
+                <h3>${visitor.name}</h3>
+                <p><strong>Barcode:</strong> ${visitor.barcode}</p>
+                <p><strong>Email:</strong> ${visitor.email}</p>
+                <p><strong>Mobile:</strong> ${visitor.mobile}</p>
+                <p><strong>Department:</strong> ${visitor.department}</p>
+                <p><strong>Year:</strong> ${visitor.year}</p>
+                </div>
+                <div class="visitor-actions">
+                <button class="action-btn">⋮</button>
+                <div class="action-dropdown">
+                    <a href="#" onclick="updateVisitor('${visitor.barcode}')">Update</a>
+                    <a href="#" onclick="deleteVisitor('${visitor.barcode}', '${visitor.name}')">Delete</a>
+                </div>
+                </div>
+            `;
+            container.appendChild(div);
+          });
+        }
+
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        document.getElementById("prevPage").disabled = currentPage === 1;
+        document.getElementById("nextPage").disabled = currentPage >= totalPages;
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = "<p>❌ Failed to load visitors.</p>";
+      }
+    }
+
+    // ✅ MODIFIED: Wrap the search function call in our new debounce utility
+    const debouncedLoadVisitors = debounce((page, search, sort) => {
+      loadVisitors(page, search, sort);
+    }, 300);
+
+    document.getElementById("searchInput").addEventListener("input", () => {
+      currentSearch = document.getElementById("searchInput").value;
+      currentPage = 1;
+      debouncedLoadVisitors(currentPage, currentSearch, currentSort);
+    });
+
+
+    // --- SCRIPT FOR CLICKABLE DROPDOWN ---
+    document.getElementById('visitorList').addEventListener('click', function (event) {
+      const actionButton = event.target.closest('.action-btn');
+      if (actionButton) {
+        const dropdown = actionButton.nextElementSibling;
+        document.querySelectorAll('.action-dropdown.show').forEach(openDropdown => {
+          if (openDropdown !== dropdown) {
+            openDropdown.classList.remove('show');
+          }
+        });
+        dropdown.classList.toggle('show');
+      }
+    });
+    window.addEventListener('click', function (event) {
+      if (!event.target.closest('.visitor-actions')) {
+        document.querySelectorAll('.action-dropdown.show').forEach(openDropdown => {
+          openDropdown.classList.remove('show');
+        });
+      }
+    });
+
+    // --- PAGINATION AND SORT ---
+    document.getElementById("prevPage").onclick = () => {
+      if (currentPage > 1) loadVisitors(--currentPage, currentSearch, currentSort);
+    };
+    document.getElementById("nextPage").onclick = () => {
+      if (currentPage < totalPages) loadVisitors(++currentPage, currentSearch, currentSort);
+    };
+    document.getElementById("sortOrder").addEventListener("change", (event) => {
+      currentSort = event.target.value;
+      currentPage = 1;
+      loadVisitors(currentPage, currentSearch, currentSort);
+    });
+
+    // Initial load
+    document.addEventListener("DOMContentLoaded", () => loadVisitors());
+
+    async function deleteVisitor(barcode, name) {
+      const token = sessionStorage.getItem('authToken');
+      if (!token) {
+        alert('Authentication error. Please log in as an admin.');
+        return;
+      }
+      if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+
+      try {
+        const res = await fetch(`/api/students/${barcode}`, {
+          method: "DELETE",
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          alert("✅ Visitor deleted successfully.");
+          loadVisitors(currentPage, currentSearch, currentSort);
+        } else {
+          alert("❌ Deletion failed: " + result.message);
+        }
+      } catch (err) {
+        console.error("❌ Error deleting visitor:", err);
+        alert("❌ An error occurred while deleting.");
+      }
+    }
+
+    function updateVisitor(barcode) {
+      window.location.href = `update-visitor.html?barcode=${encodeURIComponent(barcode)}`;
+    }
+
+    // --- Login/Logout Logic ---
+    document.addEventListener('DOMContentLoaded', () => {
+      const authToken = sessionStorage.getItem('authToken');
+      if (!authToken) {
+        // If no token is found, immediately redirect to the login page
+        window.location.href = 'index.html';
+        return; // Stop the rest of the script from running
+      }
+
+      // --- Original Page Logic (only runs if the user is logged in) ---
+      const loginBtn = document.getElementById('loginBtn');
+      const profileMenu = document.getElementById('profileMenu');
+      const profileIcon = document.getElementById('profileIcon');
+      const profileDropdown = document.getElementById('profileDropdown');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      // This logic now only runs for authenticated users
+      const adminEmail = sessionStorage.getItem('adminEmail'); // Or userEmail, etc.
+
+      if (adminEmail) {
+        loginBtn.style.display = 'none';
+        profileMenu.style.display = 'block';
+        document.querySelector('.profile-email').textContent = adminEmail;
+      } else {
+        // This case should ideally not be reached because of the gatekeeper
+        loginBtn.style.display = 'block';
+        profileMenu.style.display = 'none';
+      }
+
+      profileIcon.addEventListener('click', (event) => {
+        profileDropdown.classList.toggle('show');
+        event.stopPropagation();
+      });
+
+      window.addEventListener('click', () => {
+        if (profileDropdown.classList.contains('show')) {
+          profileDropdown.classList.remove('show');
+        }
+      });
+
+      logoutBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('adminEmail');
+        alert('You have been logged out.');
+        window.location.href = 'index.html';
+      });
+    });
+  </script>
+</body>
+
+</html>

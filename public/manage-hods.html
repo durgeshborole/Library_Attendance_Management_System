@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage HODs - Admin</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="auth-styles.css" />
+    <style>
+        .dashboard-main {
+            padding: 20px 40px;
+            max-width: 1600px;
+            margin: auto;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-table th {
+            background-color: #ff0000;
+            font-weight: 600;
+        }
+
+        .log-table tr:hover {
+            background-color: #f0f2f5;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            margin-right: 5px;
+        }
+
+        .update-btn {
+            background-color: var(--primary-color);
+        }
+
+        .delete-btn {
+            background-color: var(--error-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 12px;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="mit-header">
+    <img src="./images/mit-corer.jpg" alt="MITCORER Logo" class="mit-logo" />
+    <div class="header-text">
+      <p class="sub-text">Under the aegis of MAEER's MIT Pune</p>
+      <h1>MIT COLLEGE OF RAILWAY ENGINEERING & RESEARCH, Barshi</h1>
+      <p class="aff-text">
+        Affiliated to Punyashlok Ahilyadevi Holkar Solapur University (PAH) Solapur, Approved by AICTE, New Delhi,
+        Recognised by Govt. Of Maharashtra, DTE Mumbai.<br />
+        <strong>DTE CODE - 06901</strong>
+      </p>
+    </div>
+  </header>
+
+    <nav class="navbar">
+    <div class="logo">Manage Hods</div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Home</a></li>
+      <li><a href="log.html">Log Entries</a></li>
+      <li><a href="analysis.html">Analysis</a></li>
+      <li><a href="admin.html">Admin</a></li>
+    </ul>
+
+     <div class="profile-container">
+      <a href="index.html" class="nav-button" id="loginBtn">Login</a>
+      <div class="profile" id="profileMenu" style="display: none;">
+        <img src="./images/profile-icon.jpg"  class="profile-icon" id="profileIcon" />
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-details">
+                <p class="profile-name">Administrator</p>
+                <p class="profile-email">email@example.com</p>
+            </div>
+            <a href="#" class="logout-btn" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+    <main class="dashboard-main">
+        <div class="table-responsive">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Mobile</th>
+                        <th>Date of Birth</th>
+                        
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="hodsTableBody">
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Update HOD Information</h2>
+            <form id="updateHodForm">
+                <input type="hidden" id="updateHodId">
+                <div class="input-group"><input type="email" id="updateEmail" placeholder="Email"></div>
+                <div class="input-group"><input type="text" id="updateDepartment" placeholder="Department"></div>
+                <div class="input-group"><input type="tel" id="updateMobile" placeholder="Mobile Number"></div>
+                <div class="input-group"><input type="date" id="updateDob" placeholder="Date of Birth"></div>
+                <button type="submit" class="submit-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = sessionStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const tableBody = document.getElementById('hodsTableBody');
+            const modal = document.getElementById('updateModal');
+            const closeBtn = document.querySelector('.close-btn');
+            const updateForm = document.getElementById('updateHodForm');
+
+            const authHeader = { 'Authorization': `Bearer ${token}` };
+
+            async function fetchHods() {
+                try {
+                    const response = await fetch('/api/hods', { headers: authHeader });
+
+                    // ✅ UPDATED ERROR HANDLING:
+                    // If the response is not OK, we'll try to read the server's message.
+                    if (!response.ok) {
+                        const errorResult = await response.json().catch(() => null); // Try to parse error JSON
+                        const errorMessage = errorResult?.message || `Request failed with status ${response.status}`;
+                        throw new Error(errorMessage);
+                    }
+
+                    const hods = await response.json();
+                    renderTable(hods);
+                } catch (error) {
+                    // Now it will display the more specific error message.
+                    tableBody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Error: ${error.message}</td></tr>`;
+                }
+            }
+
+            // No changes needed in the functions below this line
+            function renderTable(hods) {
+                tableBody.innerHTML = '';
+                if (hods.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No HODs found.</td></tr>`;
+                    return;
+                }
+                hods.forEach(hod => {
+                    const dob = hod.dob ? new Date(hod.dob).toLocaleDateString() : 'N/A';
+                    const row = `
+                    <tr data-id="${hod._id}">
+                        <td>${hod.email}</td>
+                        <td>${hod.department}</td>
+                        <td>${hod.mobile || 'N/A'}</td>
+                        <td>${dob}</td>
+                        
+                        <td>
+                            <button class="action-btn update-btn" onclick="openUpdateModal('${hod._id}', '${hod.email}', '${hod.department}', '${hod.mobile || ''}', '${hod.dob ? new Date(hod.dob).toISOString().split('T')[0] : ''}')">Update</button>
+                            <button class="action-btn delete-btn" onclick="deleteHod('${hod._id}')">Delete</button>
+                        </td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            }
+            window.openUpdateModal = (id, email, department, mobile, dob) => {
+                document.getElementById('updateHodId').value = id;
+                document.getElementById('updateEmail').value = email;
+                document.getElementById('updateDepartment').value = department;
+                document.getElementById('updateMobile').value = mobile;
+                document.getElementById('updateDob').value = dob;
+                modal.style.display = 'block';
+            };
+            window.deleteHod = async (id) => {
+                if (!confirm('Are you sure you want to delete this HOD?')) return;
+                try {
+                    const response = await fetch(`/api/hods/${id}`, { method: 'DELETE', headers: authHeader });
+                    if (!response.ok) throw new Error('Failed to delete.');
+                    document.querySelector(`tr[data-id='${id}']`).remove();
+                } catch (error) {
+                    alert(error.message);
+                }
+            };
+            closeBtn.onclick = () => modal.style.display = 'none';
+            window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
+            updateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('updateHodId').value;
+                const body = JSON.stringify({
+                    email: document.getElementById('updateEmail').value,
+                    department: document.getElementById('updateDepartment').value,
+                    mobile: document.getElementById('updateMobile').value,
+                    dob: document.getElementById('updateDob').value
+                });
+                try {
+                    const response = await fetch(`/api/hods/${id}`, {
+                        method: 'PUT',
+                        headers: { ...authHeader, 'Content-Type': 'application/json' },
+                        body
+                    });
+                    if (!response.ok) throw new Error('Failed to update.');
+                    modal.style.display = 'none';
+                    fetchHods();
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+            fetchHods();
+        });
+    </script>
+</body>
+
+</html>
