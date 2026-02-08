@@ -19,6 +19,8 @@ const rateLimit = require('express-rate-limit');
 require("dotenv").config();
 const memoryUpload = multer({ storage: multer.memoryStorage() });
 
+const http = require('http').createServer(app);
+const io = require('socket.io')(http, { cors: { origin: "*" } });
 
 
 
@@ -41,11 +43,6 @@ const loginLimiter = rateLimit({
   message: { success: false, message: "Too many login attempts from this IP, please try again after 15 minutes." }
 });
 
-// ✅ ADDED: Required modules for Socket.IO
-const http = require('http');
-const { Server } = require("socket.io");
-
-const { spawn } = require("child_process");
 
 // Middleware setup
 app.use(cors());
@@ -55,16 +52,8 @@ app.use(express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// ✅ STEP 2: Create an HTTP server from your Express app
-const server = http.createServer(app);
 
 // ✅ STEP 3: Initialize Socket.IO on the HTTP server
-const io = new Server(server, {
-  cors: {
-    origin: "*", // Allows connections from any origin
-    methods: ["GET", "POST"]
-  }
-});
 
 // ✅ STEP 4: Set up the connection event listener
 io.on('connection', (socket) => {
@@ -152,6 +141,7 @@ const visitorSchema = new mongoose.Schema({
   department: String,
   year: String,
   photoUrl: String, // OR photoBase64: String
+  faceEncoding: { type: [Number], default: [] }
 });
 
 
@@ -2487,17 +2477,171 @@ app.put('/api/messages/:id/read', authenticateToken, isAdmin, async (req, res) =
 // END: MESSAGING SYSTEM ENDPOINTS
 // ===================================================================
 
-// Endpoint to get all registered student photos for Face Recognition
+// In server.js
+// In server.js
+// Updated sync route in server.js
+// app.get('/api/sync-images', async (req, res) => {
+//     try {
+//         // Fetch barcode, photoUrl (fallback), and the new faceEncoding field
+//         const visitors = await Visitor.find({}, 'barcode photoUrl faceEncoding');
+        
+//         const formattedData = visitors.map(v => ({
+//             barcode: v.barcode,
+//             photo: v.photoUrl,
+//             // If faceEncoding exists, we send it; otherwise send null
+//             faceEncoding: v.faceEncoding && v.faceEncoding.length === 128 ? v.faceEncoding : null
+//         }));
+
+//         console.log(`📡 Syncing ${formattedData.length} visitors to Face Recognition.`);
+//         res.status(200).json(formattedData);
+//     } catch (error) {
+//         res.status(500).json({ success: false, message: error.message });
+//     }
+// });
+
 app.get('/api/sync-images', async (req, res) => {
-  try {
-    // Assuming your 'User' or 'Student' model has 'barcode' and 'photo' (Base64)
-    const students = await User.find({}, 'barcode photo'); 
-    res.json(students);
-  } catch (error) {
-    res.status(500).send("Error fetching images");
-  }
+    try {
+        // Stop sending 'photoUrl' once you have encodings to save bandwidth
+        const visitors = await Visitor.find({}, 'barcode faceEncoding').lean();
+        res.json(visitors);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
 });
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server running at port ${PORT}`);
+app.put('/api/sync-encoding/:barcode', async (req, res) => {
+    try {
+        const { faceEncoding } = req.body;
+        await Visitor.findOneAndUpdate(
+            { barcode: req.params.barcode },
+            { faceEncoding: faceEncoding }
+        );
+        res.status(200).send("✅ Signature saved");
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
 });
+
+// In server.js
+app.put('/api/sync-encoding/:barcode', async (req, res) => {
+    try {
+        await Visitor.findOneAndUpdate(
+            { barcode: req.params.barcode },
+            { faceEncoding: req.body.faceEncoding }
+        );
+        res.status(200).send("✅ Signature Saved");
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+
+// app.post('/api/logs/attendance', async (req, res) => {
+//     const { barcode } = req.body;
+//     try {
+//         // 1. USE YOUR MAIN FUNCTION to get Dept, Year, and Designation
+//         // This is the logic that prevents "undefined" or "Unknown"
+//         const decoded = await decodeBarcode(barcode);
+
+//         // 2. FIND STUDENT NAME (Optional: if name isn't in the barcode, we still need the Visitor record)
+//         const visitor = await Visitor.findOne({ barcode });
+//         const studentName = visitor ? visitor.name : "Unknown User";
+
+//         // 3. CHECK FOR ENTRY OR EXIT
+//         const activeLog = await Log.findOne({ barcode, exitTime: null });
+
+//         if (activeLog) {
+//             // EXIT LOGIC
+//             activeLog.exitTime = new Date();
+//             await activeLog.save();
+//         } else {
+//             // ENTRY LOGIC: Save using the info from your decodeBarcode function
+//             const newLog = new Log({
+//                 barcode: barcode,
+//                 name: studentName,
+//                 department: decoded.department, // From your decodeBarcode function
+//                 year: decoded.year,             // From your decodeBarcode function
+//                 designation: decoded.designation, // From your decodeBarcode function
+//                 entryTime: new Date(),
+//                 date: new Date().toISOString().split('T')[0]
+//             });
+//             await newLog.save();
+//         }
+
+//         // 4. TRIGGER THE UI UPDATE (Same as manual sync)
+//         const today = new Date().toISOString().split('T')[0];
+//         const todayLogs = await Log.find({ date: today }).sort({ entryTime: -1 });
+
+//         // Push the updated data to scriptlog.js
+//         io.emit('attendanceUpdate', todayLogs); 
+
+//         res.json({ 
+//             status: "success", 
+//             name: studentName, 
+//             type: activeLog ? 'EXIT' : 'ENTRY' 
+//         });
+
+//     } catch (err) {
+//         console.error("Attendance Error:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+// In 
+// 
+
+app.post('/api/logs/attendance', async (req, res) => {
+    const { barcode } = req.body;
+    try {
+        // ✅ STEP 1: Use your MAIN decoding logic (the function you provided)
+        const decodedInfo = await decodeBarcode(barcode);
+
+        // ✅ STEP 2: Get Student Name from Visitor DB
+        const visitor = await Visitor.findOne({ barcode });
+        const studentName = visitor ? visitor.name : "Unknown";
+
+        // ✅ STEP 3: Handle Entry/Exit (Same as manual)
+        const activeLog = await Log.findOne({ barcode, exitTime: null });
+
+        if (activeLog) {
+            activeLog.exitTime = new Date();
+            await activeLog.save();
+        } else {
+            const newLog = new Log({
+                barcode: barcode,
+                name: studentName,
+                department: decodedInfo.department, // Decoded via your main function
+                year: decodedInfo.year,             // Decoded via your main function
+                designation: decodedInfo.designation, // Decoded via your main function
+                entryTime: new Date(),
+                date: new Date().toISOString().split('T')[0]
+            });
+            await newLog.save();
+        }
+
+        // ✅ STEP 4: "Shout" to the Frontend (Background Sync)
+        const todayLogs = await Log.find({ 
+            date: new Date().toISOString().split('T')[0] 
+        }).sort({ entryTime: -1 });
+
+        io.emit('attendanceUpdate', todayLogs); 
+
+        res.json({ success: true, name: studentName });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/logs/today', async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        // Fetch logs for today, sorted by newest first
+        const logs = await Log.find({ date: today }).sort({ entryTime: -1 });
+        res.json(logs);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+// server.listen(PORT, () => {
+//   console.log(`🚀 Server running at port ${PORT}`);
+// });
+
+http.listen(5000, () => console.log("Server running on port 5000"));
