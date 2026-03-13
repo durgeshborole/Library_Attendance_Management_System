@@ -71,7 +71,7 @@ def ai_worker():
                         except Exception as e:
                             print(f"❌ Failed to reach Node.js server: {e}")
 
-        time.sleep(0.1) # Prevents CPU from hitting 100%
+        time.sleep(0.05) # Prevents CPU from hitting 100%
 
 # Start the AI Thread
 threading.Thread(target=ai_worker, daemon=True).start()
