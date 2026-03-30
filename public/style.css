@@ -914,3 +914,24 @@ th, td {
   }
 
 }
+
+/* Update this in your style.css */
+.camera-container {
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    margin: 30px auto; /* This 'auto' handles the horizontal centering */
+    border: 4px solid #e50914; /* MIT Red Border for the paper */
+    border-radius: 12px;
+    overflow: hidden;
+    width: 640px; /* Adjust based on your camera resolution */
+    max-width: 90%; /* Ensures it doesn't break on smaller screens */
+    background: #000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+#video-feed {
+    width: 100%;
+    height: auto;
+    display: block;
+}

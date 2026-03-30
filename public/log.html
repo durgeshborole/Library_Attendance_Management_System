@@ -50,7 +50,7 @@
     </div>
   </nav>
 
-<div class="recognition-container" style="display: flex; justify-content: space-around; align-items: flex-start; margin-bottom: 20px;">
+<!-- <div class="recognition-container" style="display: flex; justify-content: space-around; align-items: flex-start; margin-bottom: 20px;">
     <div class="camera-box" style="text-align: center;">
         <h3 style="color: #333;">Live Face Recognition</h3>
         <img src="http://127.0.0.1:5001/video_feed" width="450" style="border: 3px solid #0056b3; border-radius: 10px;">
@@ -59,6 +59,30 @@
 
     <div class="barcode-box">
         </div>
+</div> -->
+<div class="recognition-hero" style="text-align: center; margin: 30px auto; max-width: 800px;">
+    
+    <div class="camera-box" style="display: inline-block; padding: 20px; background: #f9f9f9; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h3 style="color: #e50914; margin-bottom: 15px; font-family: 'Segoe UI', sans-serif;">Live Face Recognition System</h3>
+        
+        <div style="position: relative; display: inline-block;">
+            <img src="http://127.0.0.1:5001/video_feed" 
+                 width="640" 
+                 style="border: 5px solid #e50914; border-radius: 12px; display: block;">
+            
+            <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 12px;">
+                ● LIVE FEED: 30 FPS
+            </div>
+        </div>
+
+        <p id="face-status" style="margin-top: 15px; font-weight: bold; color: #28a745;">
+            STATUS: SYSTEM ACTIVE & SCANNING
+        </p>
+    </div>
+
+    <div class="barcode-box" style="margin-top: 20px;">
+        
+    </div>
 </div>
 
 <!-- <div style="text-align: center; margin: 20px;">
