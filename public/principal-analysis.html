@@ -258,48 +258,7 @@
             fetchData();
         });
     </script>
-    <!-- <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const loginBtn = document.getElementById('loginBtn');
-            const profileMenu = document.getElementById('profileMenu');
-            const profileIcon = document.getElementById('profileIcon');
-            const profileDropdown = document.getElementById('profileDropdown');
-            const logoutBtn = document.getElementById('logoutBtn');
-
-            const principalEmail = sessionStorage.getItem('principalEmail');
-            const authToken = sessionStorage.getItem('authToken');
-
-            if (authToken && principalEmail) {
-                // User is logged in: hide login button, show profile menu
-                loginBtn.style.display = 'none';
-                profileMenu.style.display = 'block'; // Use 'block' to show the div
-                document.querySelector('.profile-email').textContent = principalEmail;
-            } else {
-                // User is not logged in: show login button, hide profile menu
-                loginBtn.style.display = 'block';
-                profileMenu.style.display = 'none';
-            }
-
-            profileIcon.addEventListener('click', (event) => {
-                profileDropdown.classList.toggle('show');
-                event.stopPropagation();
-            });
-
-            window.addEventListener('click', () => {
-                if (profileDropdown.classList.contains('show')) {
-                    profileDropdown.classList.remove('show');
-                }
-            });
-
-            logoutBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                sessionStorage.removeItem('authToken');
-                sessionStorage.removeItem('principalEmail');
-                alert('You have been logged out.');
-                window.location.href = 'index.html';
-            });
-        });
-    </script> -->
+   
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // This gatekeeper was already correct
