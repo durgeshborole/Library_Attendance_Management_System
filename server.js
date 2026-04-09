@@ -272,76 +272,6 @@ const isHod = (req, res, next) => {
   next();
 };
 
-// app.post('/api/admin/upload-failed-list', authenticateToken, isAdmin, memoryUpload.single('failedListCsv'), async (req, res) => {
-//     if (!req.file) {
-//         return res.status(400).json({ message: "No CSV file uploaded." });
-//     }
-
-//     const failedNames = [];
-//     const fileBuffer = req.file.buffer.toString('utf-8');
-//     const readableStream = require('stream').Readable.from(fileBuffer);
-
-//     readableStream
-//         .pipe(csv({ mapHeaders: ({ header }) => header.trim().toLowerCase() }))
-//         .on('data', (row) => {
-//             // Check if the 'name' column exists and has a value, then trim and add to the list
-//             if (row.name) {
-//                 failedNames.push(row.name.trim());
-//             } else {
-//                 console.warn("⚠️ Skipping a row in the CSV because the 'name' column is missing or empty.");
-//             }
-//         })
-//         .on('end', async () => {
-//             try {
-//                 // Find all visitors who match the names in the CSV to get their barcodes
-//                 const failedVisitors = await Visitor.find({ name: { $in: failedNames } }).select('barcode');
-//                 const failedBarcodes = failedVisitors.map(v => v.barcode);
-
-//                 // Get ALL student statuses from the database
-//                 const allStudentStatuses = await AcademicStatus.find({});
-//                 const studentUpdates = [];
-
-//                 const yearOrder = ["First Year", "Second Year", "Third Year", "Final Year", "Graduated"];
-//                 const yearMap = new Map(yearOrder.map((year, index) => [year, yearOrder[index + 1]]));
-
-//                 // Prepare updates only for the students who passed (i.e., not in the failed list)
-//                 for (const student of allStudentStatuses) {
-//                     // Use a Set for efficient lookup of failed barcodes
-//                     const isFailed = new Set(failedBarcodes).has(student.barcode);
-
-//                     if (!isFailed) {
-//                         // If student is not on the failed list, promote them
-//                         const nextYear = yearMap.get(student.year) || student.year;
-//                         if (nextYear !== student.year) {
-//                             studentUpdates.push({
-//                                 updateOne: {
-//                                     filter: { barcode: student.barcode },
-//                                     update: { $set: { year: nextYear } }
-//                                 }
-//                             });
-//                         }
-//                     }
-//                     // If the student is on the failed list, we do nothing, so they stay in their current year.
-//                 }
-
-//                 let promotedCount = 0;
-//                 if (studentUpdates.length > 0) {
-//                     const result = await AcademicStatus.bulkWrite(studentUpdates);
-//                     promotedCount = result.modifiedCount;
-//                 }
-
-//                 res.status(200).json({ 
-//                     success: true, 
-//                     message: `Academic year status updated. ${promotedCount} students have been promoted. ${failedNames.length} students have been held back.`
-//                 });
-
-//             } catch (error) {
-//                 console.error("❌ Error processing failed list:", error);
-//                 res.status(500).json({ message: "Server error during academic update." });
-//             }
-//         });
-// });
-
 app.post('/api/admin/upload-failed-list', authenticateToken, isAdmin, memoryUpload.single('failedListCsv'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No CSV file uploaded." });
@@ -449,74 +379,6 @@ app.get('/api/admin/fix-academic-statuses', authenticateToken, isAdmin, async (r
   }
 });
 
-// ===================================================================
-// END: AUTHENTICATION AND AUTHORIZATION MIDDLEWARE
-// ===================================================================
-
-// async function decodeBarcode(barcode) {
-//   const unknownResult = {
-//     year: "N/A",
-//     department: "Unknown",
-//     designation: "Unknown",
-//   };
-
-//   if (!barcode || typeof barcode !== "string" || barcode.length < 5) {
-//     return unknownResult;
-//   }
-
-//   const designationPrefix = barcode.charAt(0).toUpperCase();
-//   let designation = "Unknown";
-//   let department = "Unknown";
-//   let year = "N/A";
-
-//   // ✅ Lookup designation
-//   const designationDoc = await Designation.findOne({ code: designationPrefix });
-//   if (designationDoc) designation = designationDoc.name;
-
-//   // ✅ Faculty / Librarian / Research Scholar
-//   if (designation !== "Unknown" && designation !== "Student") {
-//     const deptCode = barcode.charAt(3);
-//     const deptDoc = await Department.findOne({ code: deptCode });
-//     department = deptDoc ? deptDoc.name : "Unknown";
-//     return { year, department, designation };
-//   }
-
-//   // ✅ Student
-//   if (!isNaN(parseInt(designationPrefix, 10))) {
-//     designation = "Student";
-//     const admissionYearCode = barcode.slice(0, 2); // e.g. "22"
-//     const deptCode = barcode.charAt(2);
-//     const enrollTypeCode = barcode.slice(3, 5);
-//     studentId = barcode.slice(5);
-
-//     // find department dynamically
-//     const deptDoc = await Department.findOne({ code: deptCode });
-//     department = deptDoc ? deptDoc.name : "Unknown";
-
-//     // academic year logic
-//     const now = new Date();
-//     let currentAcademicYear = now.getFullYear() % 100;
-//     if (now.getMonth() < 6) currentAcademicYear--;
-
-//     const yearsSinceAdmission = currentAcademicYear - parseInt(admissionYearCode, 10);
-
-//     if (enrollTypeCode === "10") {
-//       if (yearsSinceAdmission === 0) year = "First Year";
-//       else if (yearsSinceAdmission === 1) year = "Second Year";
-//       else if (yearsSinceAdmission === 2) year = "Third Year";
-//       else if (yearsSinceAdmission === 3) year = "Final Year";
-//       else year = "Graduated";
-//     } else if (enrollTypeCode === "20") {
-//       if (yearsSinceAdmission === 0) year = "Second Year";
-//       else if (yearsSinceAdmission === 1) year = "Third Year";
-//       else if (yearsSinceAdmission === 2) year = "Final Year";
-//       else year = "Graduated";
-//     }
-//   }
-
-//   return { year, department, designation };
-// }
-
 async function decodeBarcode(barcode) {
   const unknownResult = {
     year: "N/A",
@@ -608,67 +470,10 @@ async function decodeBarcodeWithPromotion(barcode) {
   return decoded;
 }
 
-
-
-// app.post('/add-visitor', authenticateToken, isAdmin, memoryUpload.single('photo'), async (req, res) => {
-//   // ... (your existing logic to save the visitor) ...
-//   try {
-//     const newVisitor = new Visitor({ barcode, name, mobile, email, photoUrl });
-//     await newVisitor.save();
-
-//     // ✅ ADDED: Create a corresponding academic status record
-//     const newStatus = new AcademicStatus({ name, isPromoted: true });
-//     await newStatus.save();
-
-//     res.status(200).json({ message: "✅ Visitor added successfully!" });
-//   } catch (err) {
-//     // ... (error handling) ...
-//   }
-// });
-
-
 function getCurrentDateString() {
   const now = new Date();
   return now.toISOString().split('T')[0];
 }
-
-// app.post('/scan', async (req, res) => {
-//   const barcode = req.body?.barcode;
-//   if (!barcode) {
-//     return res.status(400).json({ error: 'Invalid or missing barcode' });
-//   }
-//   try {
-//     const visitor = await Visitor.findOne({ barcode });
-//     if (!visitor) {
-//       return res.status(404).json({ error: 'Visitor not found' });
-//     }
-//     // ... (rest of your scan logic to save the log entry)
-//     const today = new Date().toISOString().split('T')[0];
-//     const existingLog = await Log.findOne({ barcode, exitTime: null, date: today });
-//     let savedLog;
-//     if (existingLog) {
-//       existingLog.exitTime = new Date();
-//       savedLog = await existingLog.save();
-//     } else {
-//       const decoded = decodeBarcode(String(barcode)); // Ensure decodeBarcode function exists
-//       const newEntry = new Log({
-//         barcode, name: visitor.name, department: decoded.department,
-//         year: decoded.year, designation: decoded.designation, date: today,
-//       });
-//       savedLog = await newEntry.save();
-//     }
-
-//     // After successfully saving, broadcast a signal to all connected clients
-//     io.emit('logUpdate');
-//     console.log("📢 Broadcast 'logUpdate' signal to all clients.");
-
-//     return res.status(200).json({ status: existingLog ? "exit" : "entry", ...savedLog._doc, photoUrl: visitor.photoUrl });
-//   } catch (error) {
-//     console.error("Scan error:", error);
-//     return res.status(500).json({ error: 'Server error' });
-//   }
-// });
-// ✅ NEW: A simple endpoint for the frontend to check server connectivity
 
 app.post('/scan', async (req, res) => {
   const barcode = req.body?.barcode;
@@ -775,54 +580,6 @@ app.get('/stats', async (req, res) => {
   }
 });
 
-// let AUTO_EXIT_HOUR = 21; // Default: 9 PM
-// let AUTO_EXIT_MINUTE = 0;
-
-// cron.schedule('* * * * *', async () => {
-//   const now = new Date();
-//   const currentHour = now.getHours();
-//   const currentMinute = now.getMinutes();
-
-//   if (currentHour === AUTO_EXIT_HOUR && currentMinute === AUTO_EXIT_MINUTE) {
-//     const today = getCurrentDateString();
-//     const autoExitTime = new Date(
-//       now.getFullYear(),
-//       now.getMonth(),
-//       now.getDate(),
-//       AUTO_EXIT_HOUR,
-//       AUTO_EXIT_MINUTE,
-//       0
-//     );
-
-//     try {
-//       const result = await Log.updateMany(
-//         { date: today, exitTime: null },
-//         { $set: { exitTime: autoExitTime } }
-//       );
-
-//       console.log(`🕘 Auto-exit applied: ${result.modifiedCount} entries closed at ${autoExitTime.toLocaleTimeString()}`);
-//     } catch (err) {
-//       console.error("❌ Auto-exit failed:", err);
-//     }
-//   }
-// });
-
-// // Admin: update auto-exit time
-// app.post('/admin/auto-exit', (req, res) => {
-//   const { hour, minute } = req.body;
-//   if (hour === undefined || minute === undefined) {
-//     return res.status(400).json({ error: "Hour and minute are required." });
-//   }
-
-//   AUTO_EXIT_HOUR = parseInt(hour);
-//   AUTO_EXIT_MINUTE = parseInt(minute);
-//   return res.status(200).json({ message: `Auto-exit time updated to ${AUTO_EXIT_HOUR}:${AUTO_EXIT_MINUTE}` });
-// });
-
-// ===================================================================
-// START: AUTO-EXIT SCHEDULER (REVISED AND MORE PRECISE)
-// ===================================================================
-
 let autoExitTask = null; // This will hold our scheduled task
 let AUTO_EXIT_HOUR = 21; // Default: 9 PM IST
 let AUTO_EXIT_MINUTE = 0; // Default: 0 minutes
@@ -927,47 +684,6 @@ app.post('/admin/force-exit', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Admin: Add a new notice
-// app.post('/admin/notices', authenticateToken, isAdmin, async (req, res) => {
-//   const { text } = req.body;
-//   if (!text) return res.status(400).json({ error: 'Notice text required' });
-
-//   try {
-//     const newNotice = new Notice({ text });
-//     await newNotice.save();
-//     // This line is critical - it must include "success: true"
-//     res.status(201).json({ success: true, message: 'Notice posted successfully' });
-//   } catch (err) {
-//     console.error('Failed to save notice:', err);
-//     res.status(500).json({ error: 'Failed to save notice' });
-//   }
-// });
-
-// // Notice GET API
-// app.get('/notices', authenticateToken, isAdmin, async (req, res) => {
-//   try {
-//     const notices = await Notice.find().sort({ timestamp: -1 }).limit(5);
-//     res.status(200).json(notices);
-//   } catch (err) {
-//     console.error('Failed to fetch notices:', err);
-//     res.status(500).json({ error: 'Failed to load notices' });
-//   }
-// });
-
-// app.delete('/admin/notices/:id', authenticateToken, isAdmin, async (req, res) => {
-//   const { id } = req.params;
-//   try {
-//     await Notice.findByIdAndDelete(id);
-//     res.status(200).json({ success: true, message: "Notice deleted successfully" });
-//   } catch (err) {
-//     console.error("Failed to delete notice:", err);
-//     res.status(500).json({ success: false, message: "Failed to delete notice" });
-//   }
-// });
-
-// in server.js
-
-// Admin: Add a new notice (Requires Admin Login)
 app.post('/admin/notices', authenticateToken, isAdmin, async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Notice text required' });
@@ -1075,61 +791,6 @@ app.post('/bulk-upload-photos', memoryUpload.array('photos', 500), authenticateT
     return res.status(500).json({ success: false, message: 'Server error during upload.' });
   }
 });
-// in server.js
-// app.get('/students', async (req, res) => {
-//   const page = parseInt(req.query.page) || 1;
-//   const limit = parseInt(req.query.limit) || 20;
-//   const skip = (page - 1) * limit;
-//   const search = req.query.search?.toLowerCase() || "";
-  
-//   // ✅ ADDED: Logic to handle the sorting parameter from the frontend
-//   const sortByName = parseInt(req.query.sortByName) || 1; // Default to ascending (A-Z)
-//   const sortObject = { name: sortByName };
-
-//   try {
-//     const query = search
-//       ? {
-//           $or: [
-//             { name: { $regex: search, $options: "i" } },
-//             { barcode: { $regex: search, $options: "i" } }
-//           ]
-//         }
-//       : {};
-
-//     const total = await Visitor.countDocuments(query);
-    
-//     // ✅ MODIFIED: Added the .sort(sortObject) to the database query
-//     const visitors = await Visitor.find(query)
-//       .sort(sortObject) // This now sorts the results by name
-//       .skip(skip)
-//       .limit(limit);
-
-//     // This part of your logic was already correct, it properly gets the promoted year.
-//     const students = await Promise.all(visitors.map(async (visitor) => {
-//       const decoded = await decodeBarcodeWithPromotion(visitor.barcode || "");
-//       return {
-//         name: visitor.name || "No Name",
-//         barcode: visitor.barcode || "No Barcode",
-//         photoBase64: visitor.photoUrl || null,
-//         department: decoded.department || "Unknown",
-//         year: decoded.year || "Unknown", // This correctly uses the promoted year
-//         email: visitor.email || "N/A",
-//         mobile: visitor.mobile || "N/A"
-//       };
-//     }));
-
-//     res.status(200).json({
-//       students,
-//       totalPages: Math.ceil(total / limit),
-//       currentPage: page
-//     });
-//   } catch (err) {
-//     console.error("❌ Error in /students:", err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
-
-// in server.js
 
 app.get('/students', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -1333,53 +994,6 @@ app.post('/face-entry', async (req, res) => {
   }
 });
 
-
-// app.get('/admin/monthly-awards', async (req, res) => {
-//   try {
-//     const now = new Date();
-//     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-//     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-//     // Fetch logs for current month
-//     const logs = await Log.find({
-//       entryTime: { $gte: startOfMonth, $lte: endOfMonth },
-//       designation: "Student"
-//     });
-
-//     // Count visits per student
-//     const studentVisits = {};
-//     const deptVisits = {};
-
-//     for (const log of logs) {
-//       if (!studentVisits[log.barcode]) {
-//         studentVisits[log.barcode] = { count: 0, name: log.name };
-//       }
-//       studentVisits[log.barcode].count++;
-
-//       if (log.department) {
-//         deptVisits[log.department] = (deptVisits[log.department] || 0) + 1;
-//       }
-//     }
-
-//     // Top student
-//     const topStudent = Object.entries(studentVisits)
-//       .sort((a, b) => b[1].count - a[1].count)[0];
-
-//     // Top department
-//     const topDept = Object.entries(deptVisits)
-//       .sort((a, b) => b[1] - a[1])[0];
-
-//     res.status(200).json({
-//       topStudent: topStudent ? { barcode: topStudent[0], name: topStudent[1].name, visits: topStudent[1].count } : null,
-//       topDepartment: topDept ? { name: topDept[0], visits: topDept[1] } : null
-//     });
-
-//   } catch (err) {
-//     console.error("❌ Error in monthly awards:", err);
-//     res.status(500).json({ error: "Failed to generate awards" });
-//   }
-// });
-
 app.get('/api/monthly-awards', async (req, res) => {
   try {
     const now = new Date();
@@ -1465,111 +1079,6 @@ app.get('/api/monthly-awards', async (req, res) => {
   }
 });
 
-// app.post('/add-visitor', authenticateToken, isAdmin, memoryUpload.single('photo'), async (req, res) => {
-//   const { barcode, name, mobile, email } = req.body;
-//   const file = req.file;
-//   try {
-//     const photoUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-//     const newVisitor = new Visitor({ barcode, name, mobile, email, photoUrl });
-//     await newVisitor.save();
-
-//     // Also create a default academic status record for the new student
-//     const decoded = decodeBarcode(barcode);
-//     const newStatus = new AcademicStatus({ barcode, year: decoded.year });
-//     await newStatus.save();
-
-//     res.status(200).json({ message: "✅ Visitor added successfully!" });
-//   } catch (err) {
-//     // If a visitor with the same barcode exists, the academic status might also exist. Handle this gracefully.
-//     if (err.code === 11000) { // Duplicate key error
-//       console.warn(`Visitor with barcode ${barcode} may already exist.`);
-//       return res.status(409).json({ message: `Visitor with barcode ${barcode} already exists.` });
-//     }
-//     res.status(500).json({ message: "❌ Error saving visitor." });
-//   }
-// });
-
-// app.post('/bulk-add-visitors', tempUpload.fields([{ name: "csv" }, { name: "photos" }]), async (req, res) => {
-//   try {
-//     const csvFile = req.files["csv"]?.[0];
-//     const photoFiles = req.files["photos"] || [];
-
-//     if (!csvFile) {
-//       return res.status(400).json({ success: false, message: "CSV file is missing." });
-//     }
-
-//     const photoMap = {};
-//     if (photoFiles.length > 0) {
-//       photoFiles.forEach(file => {
-//         const key = path.parse(file.originalname).name.trim().toLowerCase();
-//         photoMap[key] = `data:${file.mimetype};base64,${fs.readFileSync(file.path).toString('base64')}`;
-//       });
-//     }
-
-//     const recordsToInsert = [];
-
-//     fs.createReadStream(csvFile.path)
-//       .pipe(csv({
-//         trim: true,
-//         bom: true,
-//         mapHeaders: ({ header }) => header.trim().toLowerCase()
-//       }))
-//       .on("data", (row) => {
-//         const { barcode, name, mobile, email } = row;
-//         if (!barcode || !name) {
-//           console.warn(`[Bulk Upload] ⚠️ SKIPPING ROW: The 'barcode' and 'name' columns are required. Found barcode: '${barcode}', name: '${name}'.`);
-//           return;
-//         }
-//         const photoUrl = photoMap[barcode.toLowerCase()] || null;
-//         if (!photoUrl) {
-//           console.info(`[Bulk Upload] ℹ️ INFO: No photo found for barcode '${barcode}'. Adding visitor without photo.`);
-//         }
-//         recordsToInsert.push({
-//           barcode,
-//           name,
-//           mobile: mobile || '',
-//           email: email || '',
-//           photoUrl: photoUrl
-//         });
-//       })
-//       .on("end", async () => {
-//         try {
-//           if (recordsToInsert.length > 0) {
-//             // Step 1: Insert all the new visitors
-//             const result = await Visitor.insertMany(recordsToInsert, { ordered: false }).catch(e => {
-//               if (e.code !== 11000) throw e; // Ignore duplicate visitor errors, but throw others
-//               console.warn("Some visitors were duplicates and were skipped.");
-//             });
-//             const insertedCount = result ? result.length : recordsToInsert.length;
-
-//             // ✅ ADDED: Step 2: Create the AcademicStatus record for each new visitor
-//             const statusRecords = recordsToInsert.map(v => {
-//               const decoded = decodeBarcode(v.barcode);
-//               return {
-//                 barcode: v.barcode,
-//                 year: decoded.year
-//               };
-//             });
-//             await AcademicStatus.insertMany(statusRecords, { ordered: false }).catch(e => {
-//               if (e.code !== 11000) throw e; // Ignore duplicate status errors
-//               console.warn("Some academic status records already existed and were skipped.");
-//             });
-
-//             console.log(`[Bulk Upload] ✅ Successfully processed ${insertedCount} new visitors and their academic statuses.`);
-//             res.status(200).json({ success: true, message: `Successfully added ${insertedCount} visitors.` });
-//           } else {
-//             res.status(200).json({ success: true, message: "0 visitors were added. Please check the server console for warnings." });
-//           }
-//         } catch (dbError) {
-//           console.error("❌ Database error during bulk insert:", dbError);
-//           res.status(500).json({ success: false, message: "A database error occurred during the bulk insert." });
-//         }
-//       });
-//   } catch (err) {
-//     console.error("❌ General error in bulk upload:", err);
-//     res.status(500).json({ success: false, message: "A server error occurred." });
-//   }
-// });
 
 app.post('/add-visitor', authenticateToken, isAdmin, memoryUpload.single('photo'), async (req, res) => {
   const { barcode, name, mobile, email } = req.body;
@@ -1768,87 +1277,6 @@ app.post("/api/reset-password", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error during password reset." });
   }
 });
-
-
-// server.js
-
-// app.post("/api/hod-login", async (req, res) => {
-//   const { email, password } = req.body;
-//   try {
-//     const hod = await Hod.findOne({ email });
-//     if (!hod) {
-//       return res.status(401).json({ success: false, message: "Invalid credentials" });
-//     }
-
-//     const match = await bcrypt.compare(password, hod.password);
-//     if (!match) {
-//       return res.status(401).json({ success: false, message: "Invalid credentials" });
-//     }
-
-//     // --- NEW LOGIC FOR VERIFICATION ---
-//     if (!hod.isVerified) {
-//       // This is the first successful login. Trigger OTP verification.
-//       const otp = crypto.randomInt(100000, 999999).toString();
-//       hod.otp = otp;
-//       hod.otpExpires = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
-//       await hod.save();
-
-//       // Send the OTP via email
-//       await transporter.sendMail({
-//         to: hod.email,
-//         from: process.env.EMAIL_USER,
-//         subject: 'HOD Account Login Verification Code',
-//         text: `Your one-time verification code is: ${otp}\n\nThis code is required to complete your first login and will expire in 10 minutes.\n`
-//       });
-
-//       // Respond to the client, telling them OTP is required
-//       return res.status(200).json({
-//         success: true,
-//         verificationRequired: true, // A flag for the frontend
-//         message: "Login successful. Please enter the verification code sent to your email to continue."
-//       });
-
-//     } else {
-//       // This is a normal login for an already verified user.
-//       const token = jwt.sign(
-//         { id: hod._id, role: 'hod', department: hod.department },
-//         process.env.JWT_SECRET,
-//         { expiresIn: '8h' }
-//       );
-
-//       // ✅ UPDATED: Added department to the response
-//       return res.json({ success: true, verificationRequired: false, token, department: hod.department });
-//     }
-
-//   } catch (err) {
-//     console.error("❌ HOD login error:", err);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-
-// Route to register a new HOD
-// ✅ UPDATED HOD REGISTRATION ROUTE
-// app.post("/api/register-hod", async (req, res) => {
-//   // Get new fields from body
-//   const { email, password, department, mobile, dob } = req.body;
-//   if (!email || !password || !department) {
-//     return res.status(400).json({ success: false, message: "Email, password, and department are required." });
-//   }
-//   try {
-//     const existing = await Hod.findOne({ email });
-//     if (existing) {
-//       return res.status(409).json({ success: false, message: "HOD with this email already exists" });
-//     }
-//     const hashedPassword = await bcrypt.hash(password, 10);
-//     // Add new fields to the document
-//     const newHod = new Hod({ email, password: hashedPassword, department, mobile, dob });
-//     await newHod.save();
-//     res.status(201).json({ success: true, message: "✅ HOD registered successfully" });
-//   } catch (err) {
-//     console.error("❌ Register HOD error:", err);
-//     res.status(500).json({ success: false, message: "Server error during HOD registration." });
-//   }
-// });
 
 
 app.post("/api/register-hod", async (req, res) => {
@@ -2082,23 +1510,6 @@ app.get('/api/monthly-awards', async (req, res) => {
 });
 
 
-// app.post("/api/register-principal", authenticateToken, isAdmin, async (req, res) => {
-//     try {
-//         const { email, password } = req.body;
-//         if (!email || !password) return res.status(400).json({ message: "Email and password required." });
-//         const existing = await Principal.findOne({ email });
-//         if (existing) {
-//             return res.status(409).json({ message: "Principal account already exists." });
-//         }
-//         const hashedPassword = await bcrypt.hash(password, 10);
-//         const newPrincipal = new Principal({ email, password: hashedPassword });
-//         await newPrincipal.save();
-//         res.status(201).json({ message: "Principal account created successfully." });
-//     } catch (error) {
-//         res.status(500).json({ message: "Server error." });
-//     }
-// });
-
 app.post("/api/register-principal",
   authenticateToken,
   isAdmin,
@@ -2121,26 +1532,6 @@ app.post("/api/register-principal",
     }
   });
 
-// Your future login page will call this endpoint.
-// app.post("/api/principal-login", async (req, res) => {
-//     try {
-//         const { email, password } = req.body;
-//         const principal = await Principal.findOne({ email });
-//         if (!principal) {
-//             return res.status(401).json({ message: "Invalid credentials." });
-//         }
-//         const match = await bcrypt.compare(password, principal.password);
-//         if (!match) {
-//             return res.status(401).json({ message: "Invalid credentials." });
-//         }
-//         const token = jwt.sign({ id: principal._id, role: 'principal' }, process.env.JWT_SECRET, { expiresIn: '8h' });
-//         res.json({ success: true, token });
-//     } catch (error) {
-//         res.status(500).json({ message: "Server error during login." });
-//     }
-// });
-
-// This is the main endpoint that powers the dashboard.
 app.get("/api/principal/stats", authenticateToken, isPrincipal, async (req, res) => {
   try {
     const today = new Date();
@@ -2184,69 +1575,6 @@ app.get("/api/principal/stats", authenticateToken, isPrincipal, async (req, res)
     res.status(500).json({ message: "Error fetching principal stats." });
   }
 });
-
-// app.post("/api/login/unified", async (req, res) => {
-
-
-//   const { email, password } = req.body;
-//   if (!email || !password) {
-//     return res.status(400).json({ message: "Email and password are required." });
-//   }
-
-//   try {
-//     // Step 1: Check if the user is an Admin
-//     const admin = await Admin.findOne({ email });
-//     if (admin) {
-//       const match = await bcrypt.compare(password, admin.password);
-//       if (match) {
-//         const token = jwt.sign({ id: admin._id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '8h' });
-//         return res.json({ success: true, token, role: 'admin', email: admin.email });
-//       }
-//     }
-
-//     // Step 2: If not an Admin, check if the user is a Principal
-//     const principal = await Principal.findOne({ email });
-//     if (principal) {
-//       const match = await bcrypt.compare(password, principal.password);
-//       if (match) {
-//         const token = jwt.sign({ id: principal._id, role: 'principal' }, process.env.JWT_SECRET, { expiresIn: '8h' });
-//         return res.json({ success: true, token, role: 'principal', email: principal.email });
-//       }
-//     }
-
-//     // Step 3: If not an Admin or Principal, check if the user is an HOD
-//     const hod = await Hod.findOne({ email });
-//     if (hod) {
-//       const match = await bcrypt.compare(password, hod.password);
-//       if (match) {
-//         // HODs have a special one-time verification flow
-//         // if (!hod.isVerified) {
-//         //   const otp = crypto.randomInt(100000, 999999).toString();
-//         //   hod.otp = otp;
-//         //   hod.otpExpires = Date.now() + 10 * 60 * 1000;
-//         //   await hod.save();
-//         //   // You would typically send an email with the OTP here
-//         //   console.log(`HOD Login OTP for ${hod.email}: ${otp}`);
-//         //   return res.json({ success: true, verificationRequired: true, role: 'hod', message: "HOD verification required. An OTP has been sent." });
-//         // } else {
-//         //   const token = jwt.sign({ id: hod._id, role: 'hod', department: hod.department }, process.env.JWT_SECRET, { expiresIn: '8h' });
-//         //   return res.json({ success: true, token, role: 'hod', department: hod.department });
-//         // }
-
-//         const token = jwt.sign({ id: hod._id, role: 'hod', department: hod.department }, process.env.JWT_SECRET, { expiresIn: '8h' });
-//         return res.json({ success: true, token, role: 'hod', department: hod.department, email: hod.email });
-//       }
-//     }
-
-//     // Step 4: If user is not found in any collection, send an error
-//     return res.status(401).json({ message: "Invalid credentials." });
-
-//   } catch (error) {
-//     console.error("Unified login error:", error);
-//     res.status(500).json({ message: "Server error during login." });
-//   }
-// });
-
 
 app.post("/api/login/unified", async (req, res) => {
   const { email, password } = req.body;
@@ -2473,31 +1801,6 @@ app.put('/api/messages/:id/read', authenticateToken, isAdmin, async (req, res) =
   }
 });
 
-// ===================================================================
-// END: MESSAGING SYSTEM ENDPOINTS
-// ===================================================================
-
-// In server.js
-// In server.js
-// Updated sync route in server.js
-// app.get('/api/sync-images', async (req, res) => {
-//     try {
-//         // Fetch barcode, photoUrl (fallback), and the new faceEncoding field
-//         const visitors = await Visitor.find({}, 'barcode photoUrl faceEncoding');
-        
-//         const formattedData = visitors.map(v => ({
-//             barcode: v.barcode,
-//             photo: v.photoUrl,
-//             // If faceEncoding exists, we send it; otherwise send null
-//             faceEncoding: v.faceEncoding && v.faceEncoding.length === 128 ? v.faceEncoding : null
-//         }));
-
-//         console.log(`📡 Syncing ${formattedData.length} visitors to Face Recognition.`);
-//         res.status(200).json(formattedData);
-//     } catch (error) {
-//         res.status(500).json({ success: false, message: error.message });
-//     }
-// });
 
 app.get('/api/sync-images', async (req, res) => {
     try {
@@ -2535,59 +1838,6 @@ app.put('/api/sync-encoding/:barcode', async (req, res) => {
     }
 });
 
-
-// app.post('/api/logs/attendance', async (req, res) => {
-//     const { barcode } = req.body;
-//     try {
-//         // 1. USE YOUR MAIN FUNCTION to get Dept, Year, and Designation
-//         // This is the logic that prevents "undefined" or "Unknown"
-//         const decoded = await decodeBarcode(barcode);
-
-//         // 2. FIND STUDENT NAME (Optional: if name isn't in the barcode, we still need the Visitor record)
-//         const visitor = await Visitor.findOne({ barcode });
-//         const studentName = visitor ? visitor.name : "Unknown User";
-
-//         // 3. CHECK FOR ENTRY OR EXIT
-//         const activeLog = await Log.findOne({ barcode, exitTime: null });
-
-//         if (activeLog) {
-//             // EXIT LOGIC
-//             activeLog.exitTime = new Date();
-//             await activeLog.save();
-//         } else {
-//             // ENTRY LOGIC: Save using the info from your decodeBarcode function
-//             const newLog = new Log({
-//                 barcode: barcode,
-//                 name: studentName,
-//                 department: decoded.department, // From your decodeBarcode function
-//                 year: decoded.year,             // From your decodeBarcode function
-//                 designation: decoded.designation, // From your decodeBarcode function
-//                 entryTime: new Date(),
-//                 date: new Date().toISOString().split('T')[0]
-//             });
-//             await newLog.save();
-//         }
-
-//         // 4. TRIGGER THE UI UPDATE (Same as manual sync)
-//         const today = new Date().toISOString().split('T')[0];
-//         const todayLogs = await Log.find({ date: today }).sort({ entryTime: -1 });
-
-//         // Push the updated data to scriptlog.js
-//         io.emit('attendanceUpdate', todayLogs); 
-
-//         res.json({ 
-//             status: "success", 
-//             name: studentName, 
-//             type: activeLog ? 'EXIT' : 'ENTRY' 
-//         });
-
-//     } catch (err) {
-//         console.error("Attendance Error:", err);
-//         res.status(500).json({ error: err.message });
-//     }
-// });
-// In 
-// 
 
 app.post('/api/logs/attendance', async (req, res) => {
     const { barcode } = req.body;

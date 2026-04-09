@@ -1,5 +1,29 @@
-opencv-python-headless
-face-recognition
-numpy
-requests
-dlib
+# Face Recognition System — Python dependencies
+# Install with:  pip install -r requirements.txt
+#
+# GPU users: swap the two onnxruntime lines and faiss lines below
+# ─────────────────────────────────────────────────────────────────
+
+# Core vision
+opencv-python>=4.9.0
+numpy>=1.26.0
+
+# InsightFace: ArcFace model (detector + embedder in one package)
+insightface>=0.7.3
+
+# ONNX runtime for InsightFace model inference — CPU version
+onnxruntime>=1.18.0
+# GPU version (uncomment and remove the line above if you have CUDA):
+# onnxruntime-gpu>=1.18.0
+
+# FAISS — fast vector similarity search — CPU version
+faiss-cpu>=1.8.0
+# GPU version (uncomment and remove the line above if you have CUDA):
+# faiss-gpu>=1.7.4
+
+# Flask server + CORS
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# HTTP client (for posting to Node.js)
+requests>=2.31.0
