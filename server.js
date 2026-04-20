@@ -1893,11 +1893,18 @@ app.get('/api/logs/today', async (req, res) => {
 
 const PYTHON_API_URL = process.env.PYTHON_API_URL || "http://localhost:5001";
 
-// Example usage in your recognize route:
-const response = await fetch(`${PYTHON_API_URL}/recognize`, {
-  method: "POST",
-  body: formData,
-});
+// Wrap the execution in an async function
+async function callPythonAPI(formData) {
+  try {
+    const response = await fetch(`${PYTHON_API_URL}/recognize`, {
+      method: "POST",
+      body: formData,
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Python API Error:", error);
+  }
+}
 
 
 // server.listen(PORT, () => {
