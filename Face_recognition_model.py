@@ -247,8 +247,9 @@ def _mjpeg():
 # ══════════════════════════════════════════════════════════════════════════════
 
 app = Flask(__name__)
-CORS(app)
-
+# CORS(app)
+# from flask_cors import CORS
+CORS(app, origins=["https://library-attendance-management-system-8h3i.onrender.com"])
 
 @app.route("/video_feed")
 def video_feed():

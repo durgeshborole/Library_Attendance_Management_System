@@ -1890,6 +1890,16 @@ app.get('/api/logs/today', async (req, res) => {
         res.status(500).send(err.message);
     }
 });
+
+const PYTHON_API_URL = process.env.PYTHON_API_URL || "http://localhost:5001";
+
+// Example usage in your recognize route:
+const response = await fetch(`${PYTHON_API_URL}/recognize`, {
+  method: "POST",
+  body: formData,
+});
+
+
 // server.listen(PORT, () => {
 //   console.log(`🚀 Server running at port ${PORT}`);
 // });
