@@ -268,7 +268,7 @@ function updateLiveLog(logs) {
 // 2. The Fetching Function
 async function autoRefreshLogs() {
     try {
-        const response = await fetch('/api/logs/today'); 
+        const response = await fetch('https://library-attendance-management-system-8h3i.onrender.com/api/logs/attendance'); 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
