@@ -1,36 +1,39 @@
-# Use Python base (needed for face_recognition dependencies)
+# ─────────────────────────────────────────────
+#  Python-only Docker image for the
+#  Flask Face Recognition microservice
+#  Deploy this on Render (or Railway / Fly.io)
+# ─────────────────────────────────────────────
+
 FROM python:3.9-slim
 
-# Install system dependencies for OpenCV and Node.js
+# System dependencies required by OpenCV and InsightFace
 RUN apt-get update && apt-get install -y \
-    curl \
     build-essential \
     cmake \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js (Version 18)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
-
-# Create App Directory
+# Set working directory
 WORKDIR /app
 
-# Install Node dependencies
-COPY package*.json ./
-RUN npm install
-
-# Install Python dependencies
+# Install Python dependencies first (cached layer)
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project files
-COPY . .
+# Copy only the files needed for face recognition
+COPY Face_recognition_model.py ./
+COPY simple_facerec.py ./
+COPY migrate_encodings.py ./
+COPY face_cache.pkl ./
+COPY faces/ ./faces/
 
-# Set environment variables (Render will also set these)
-ENV PORT=5000
+# Render assigns a PORT env variable — Flask must bind to it
+ENV PORT=5001
 
-# Start both services: Node.js in foreground, Python in background
-# 'sh -c' allows running multiple commands
-CMD ["sh", "-c", "python face_recognition.py & npm start"]
+# Expose the port
+EXPOSE 5001
+
+# Start the Flask server
+CMD ["python", "Face_recognition_model.py"]
