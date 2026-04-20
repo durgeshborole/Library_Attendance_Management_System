@@ -268,7 +268,7 @@ function updateLiveLog(logs) {
 // 2. The Fetching Function
 async function autoRefreshLogs() {
     try {
-        const response = await fetch('http://localhost:5000/api/logs/today'); 
+        const response = await fetch('/api/logs/today'); 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
@@ -310,7 +310,7 @@ function formatTime(dateString) {
 
 
     // Connect to the socket server
-const socket = io("http://localhost:5000");
+const socket = io();
 
 socket.on("connect", () => {
     console.log("✅ Connected to Live Update Server!");
