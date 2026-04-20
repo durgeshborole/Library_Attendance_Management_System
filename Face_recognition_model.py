@@ -2,7 +2,7 @@ from __future__ import annotations
 import threading
 import time
 from typing import Optional
-
+import os
 import cv2
 import numpy as np
 import requests
@@ -295,5 +295,5 @@ if __name__ == "__main__":
 
     print(f"🚀  Stream  →  http://0.0.0.0:{PORT}/video_feed")
     print(f"📊  Metrics →  http://0.0.0.0:{PORT}/status\n")
-
+    port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=PORT, threaded=True, debug=False)
